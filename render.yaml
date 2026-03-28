@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: baby-shower-bash
+    env: node
+    branch: main
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: MOM_NAME
+        value: Baby Shower
+      - key: APP_TITLE
+        value: Baby Shower Bash

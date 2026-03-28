@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cafe bebe - Host Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Sacramento&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brown: #5c3317;
+    --brown-light: #8b5e3c;
+    --brown-dark: #3e1f0d;
+    --pink: #f2a6b8;
+    --pink-light: #fce4ec;
+    --pink-stripe: #f8c8d8;
+    --cream: #fdf8f0;
+    --cream-dark: #f5ead6;
+    --white: #fffef9;
+    --text: #3e1f0d;
+    --gold: #c49b63;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    color: var(--brown);
+  }
+  .header h1 span { font-family: 'Sacramento', cursive; font-size: 2.4rem; color: var(--pink); }
+  .header p { color: var(--brown-light); margin-top: 4px; }
+
+  /* Reset All button */
+  .reset-all-section {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .btn-reset-all {
+    background: #b91c1c;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+  }
+  .btn-reset-all:hover { background: #991b1b; }
+
+  /* Game Grid */
+  .games-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (max-width: 768px) { .games-grid { grid-template-columns: 1fr; } }
+
+  .game-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.06);
+    border: 2px solid var(--cream-dark);
+  }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .game-emoji {
+    font-size: 1.8rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pink-light);
+    border-radius: 12px;
+  }
+  .game-title { font-size: 1.4rem; font-weight: 700; color: var(--brown); }
+
+  .status-pill {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: auto;
+  }
+  .status-waiting { background: var(--cream-dark); color: var(--brown-light); }
+  .status-active { background: var(--pink); color: white; }
+  .status-reveal { background: var(--gold); color: white; }
+
+  .player-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--brown-light);
+    text-decoration: none;
+  }
+  .player-link:hover { text-decoration: underline; color: var(--brown); }
+
+  /* Setup Form */
+  .setup-form {
+    background: var(--pink-light);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 12px 0;
+    border: 2px solid var(--pink);
+  }
+  .setup-form label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    color: var(--brown);
+  }
+  .setup-form input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--cream-dark);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 10px;
+    background: white;
+  }
+  .setup-form input:focus { outline: none; border-color: var(--brown-light); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-start { background: var(--brown); color: white; }
+  .btn-start:hover:not(:disabled) { background: var(--brown-dark); }
+  .btn-reveal { background: var(--gold); color: white; }
+  .btn-reveal:hover:not(:disabled) { background: #b08a55; }
+  .btn-reset { background: var(--cream-dark); color: var(--brown-light); }
+  .btn-reset:hover:not(:disabled) { background: #ede0c8; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* Entries List */
+  .entries-section { margin-top: 16px; }
+  .entries-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--brown-light);
+    margin-bottom: 8px;
+  }
+
+  .entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    background: var(--cream);
+    animation: fadeIn 0.3s;
+  }
+  .entry-row:nth-child(even) { background: var(--pink-light); }
+  .entry-info { display: flex; align-items: center; gap: 8px; }
+  .entry-name { font-weight: 600; color: var(--brown-dark); }
+  .entry-answer { color: var(--brown); font-weight: 500; }
+
+  .winner-entry {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    border: 2px solid var(--gold);
+  }
+
+  .btn-delete-entry {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    padding: 4px;
+  }
+  .btn-delete-entry:hover { opacity: 1; }
+
+  .no-entries {
+    text-align: center;
+    color: var(--brown-light);
+    padding: 16px;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  /* Test Mode */
+  .test-mode {
+    margin-top: 16px;
+    border: 2px dashed var(--cream-dark);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .test-mode-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--cream);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--brown-light);
+    border: none;
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
+  }
+  .test-mode-toggle:hover { background: var(--cream-dark); }
+  .test-mode-body { padding: 12px 16px; display: none; }
+  .test-mode-body.open { display: block; }
+  .test-mode-note {
+    font-size: 0.75rem;
+    color: var(--brown-light);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .test-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-clear {
+    background: #fef3c7;
+    color: #92400e;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-clear:hover { background: #fde68a; }
+
+  /* Winner display */
+  .winner-banner {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    margin: 12px 0;
+  }
+  .winner-banner .crown { font-size: 2rem; }
+  .winner-banner .name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'Sacramento', cursive;
+    color: var(--brown);
+  }
+  .winner-banner .detail { font-size: 0.9rem; color: var(--brown-light); margin-top: 4px; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--brown-dark);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .toast.error { background: #b91c1c; }
+  .toast.success { background: var(--brown); }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cafe <span>Bebe</span> &mdash; Host Panel</h1>
+  <p>Control your baby shower games</p>
+</div>
+
+<div class="reset-all-section">
+  <button class="btn-reset-all" onclick="resetAll()">Reset ALL Games</button>
+</div>
+
+<!-- Price is Right Controls -->
+<div id="pirControls" style="max-width: 1200px; margin: 0 auto 24px;"></div>
+
+<div class="games-grid" id="gamesGrid"></div>
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+let ws;
+let currentState = null;
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') {
+      currentState = msg.data;
+      render(msg.data);
+    }
+  };
+  ws.onclose = () => setTimeout(connect, 2000);
+  ws.onerror = () => ws.close();
+}
+
+function render(state) {
+  const grid = document.getElementById('gamesGrid');
+  grid.innerHTML = Object.values(state.games).map(game => renderGameCard(game)).join('');
+  document.getElementById('pirControls').innerHTML = renderPIR(state.priceIsRight);
+}
+
+function renderPIR(pir) {
+  if (!pir) return '';
+
+  if (!pir.active || pir.status === 'idle') {
+    return `
+      <div class="game-card" style="border: 3px solid var(--gold);">
+        <div class="game-header">
+          <span class="game-emoji">💰</span>
+          <span class="game-title">Price is Right: Baby Edition</span>
+        </div>
+        <div class="setup-form">
+          <label>Prize for the Winner</label>
+          <input type="text" id="pir-prize" placeholder="e.g. $25 gift card">
+          <button class="btn btn-start" onclick="pirStart()">🎬 Start Price is Right</button>
+        </div>
+      </div>`;
+  }
+
+  const round = pir.currentRound > 0 ? pir.rounds[pir.currentRound - 1] : null;
+
+  let content = `
+    <div class="game-card" style="border: 3px solid var(--gold);">
+      <div class="game-header">
+        <span class="game-emoji">💰</span>
+        <span class="game-title">Price is Right: Baby Edition</span>
+        <span class="status-pill" style="background: var(--gold); color: white;">
+          ${pir.status === 'lobby' ? 'Lobby' : pir.status === 'round-active' ? 'Round ' + pir.currentRound + ' Active' : pir.status === 'round-reveal' ? 'Round ' + pir.currentRound + ' Results' : 'Finished'}
+        </span>
+      </div>
+      <a href="/play/priceisright" target="_blank" class="player-link">📱 Open player screen →</a>
+      <div style="margin: 8px 0; font-size: 0.9rem; color: var(--brown-light);">
+        👥 ${pir.players.length} player${pir.players.length !== 1 ? 's' : ''} joined
+        ${pir.advancingPlayers.length > 0 && pir.status !== 'lobby' ? ' · ✅ ' + pir.advancingPlayers.length + ' advancing' : ''}
+      </div>`;
+
+  // Lobby — set up Round 1
+  if (pir.status === 'lobby') {
+    content += `
+      <div class="setup-form">
+        <label>Round 1 Product Name</label>
+        <input type="text" id="pir-product" placeholder="e.g. Pampers Diapers 100ct">
+        <label>Correct Price ($)</label>
+        <input type="number" id="pir-price" placeholder="e.g. 24.99" step="0.01">
+        <button class="btn btn-start" onclick="pirSetRound()">▶ Start Round 1</button>
+      </div>`;
+  }
+
+  // Round Active
+  if (pir.status === 'round-active' && round) {
+    content += `
+      <div style="background: var(--cream-dark); border-radius: 12px; padding: 16px; margin: 12px 0;">
+        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} of 3</div>
+        <div style="font-size: 1.1rem; margin: 4px 0;">📦 ${escHtml(round.productName)}</div>
+        <div style="color: var(--brown-light);">Correct price: $${round.correctPrice.toFixed(2)}</div>
+        <div style="margin-top: 8px; font-weight: 600;">📝 ${round.entries.length} guess${round.entries.length !== 1 ? 'es' : ''} submitted</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-reveal" onclick="pirEndRound()">🏁 End Round ${pir.currentRound}</button>
+      </div>`;
+  }
+
+  // Round Reveal
+  if (pir.status === 'round-reveal' && round) {
+    content += `
+      <div style="background: var(--cream-dark); border-radius: 12px; padding: 16px; margin: 12px 0;">
+        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} Results</div>
+        <div>📦 ${escHtml(round.productName)} — $${round.correctPrice.toFixed(2)}</div>
+        ${round.results.map((r, i) => {
+          const advanced = round.advancingNames.includes(r.name.toLowerCase());
+          return '<div style="padding: 6px 10px; margin: 4px 0; border-radius: 8px; background: ' + (advanced ? '#d1fae5' : '#fef2f2') + ';">' +
+            (advanced ? '✅' : '❌') + ' ' + escHtml(r.name) + ' — $' + r.guess.toFixed(2) + ' (off by $' + r.diff.toFixed(2) + ')' +
+          '</div>';
+        }).join('')}
+      </div>`;
+
+    // Set up next round
+    if (pir.currentRound < 3) {
+      content += `
+        <div class="setup-form">
+          <label>Round ${pir.currentRound + 1} Product Name</label>
+          <input type="text" id="pir-product" placeholder="e.g. Baby Monitor">
+          <label>Correct Price ($)</label>
+          <input type="number" id="pir-price" placeholder="e.g. 49.99" step="0.01">
+          <button class="btn btn-start" onclick="pirSetRound()">▶ Start Round ${pir.currentRound + 1}</button>
+        </div>`;
+    }
+  }
+
+  // Finished
+  if (pir.status === 'finished') {
+    if (pir.winner) {
+      content += `
+        <div class="winner-banner">
+          <div class="crown">🏆</div>
+          <div class="name">${escHtml(pir.winner.name)}</div>
+          <div class="detail">Guessed $${pir.winner.guess.toFixed(2)} (off by $${pir.winner.diff.toFixed(2)})</div>
+          ${pir.prize ? '<div class="detail">🎁 ' + escHtml(pir.prize) + '</div>' : ''}
+        </div>`;
+    }
+  }
+
+  // Always show end game button when active
+  content += `
+    <div class="actions" style="margin-top: 12px;">
+      <button class="btn btn-reset" onclick="pirEnd()">🛑 End Price is Right</button>
+    </div>
+  </div>`;
+
+  return content;
+}
+
+function renderGameCard(game) {
+  const isWaiting = game.status === 'waiting';
+  const isActive = game.status === 'active';
+  const isReveal = game.status === 'reveal';
+
+  return `
+    <div class="game-card">
+      <div class="game-header">
+        <span class="game-emoji">${game.emoji}</span>
+        <span class="game-title">${game.title}</span>
+        <span class="status-pill status-${game.status}">
+          ${isWaiting ? 'Waiting' : isActive ? 'Active' : 'Revealed'}
+        </span>
+      </div>
+
+      <a href="/play/${game.id}" target="_blank" class="player-link">\ud83d\udcf1 Open player screen &rarr;</a>
+
+      ${isWaiting ? `
+        <div class="setup-form">
+          <label>Correct Answer ${game.id === 'belly' ? '(number)' : ''}</label>
+          <input type="${game.id === 'belly' ? 'number' : 'text'}" id="answer-${game.id}"
+            placeholder="${game.id === 'belly' ? 'e.g. 42.5' : 'e.g. Snickers'}" step="0.1">
+          <label>Prize Description</label>
+          <input type="text" id="prize-${game.id}" placeholder="e.g. Gift card">
+          <button class="btn btn-start" onclick="setupGame('${game.id}')">\u2615 Start Game</button>
+        </div>
+      ` : ''}
+
+      ${isReveal && game.tiedEntries && game.tiedEntries.length > 1 ? `
+        <div class="winner-banner" style="border-color: var(--pink);">
+          <div class="crown">\ud83c\udfb0</div>
+          <div class="name" style="font-family: 'Playfair Display', serif; font-size: 1.1rem;">It's a Tie!</div>
+          <div class="detail">${game.tiedEntries.map(e => escHtml(e.name)).join(', ')} all tied</div>
+          <div class="detail" style="margin-top: 8px; font-weight: 600;">Use the spinner on the TV screen to pick the winner!</div>
+        </div>
+      ` : ''}
+      ${isReveal && game.winner ? `
+        <div class="winner-banner">
+          <div class="crown">\ud83d\udc51</div>
+          <div class="name">${escHtml(game.winner.name)}</div>
+          <div class="detail">Answer: ${escHtml(game.winner.answer)} | Correct: ${escHtml(game.correctAnswer)}</div>
+          ${game.prize ? '<div class="detail">\ud83c\udf81 ' + escHtml(game.prize) + '</div>' : ''}
+        </div>
+      ` : ''}
+
+      <div class="entries-section">
+        <div class="entries-header">\u2615 ${game.entries.length} submission${game.entries.length !== 1 ? 's' : ''}</div>
+        ${game.entries.length === 0 ? '<div class="no-entries">No orders yet...</div>' : ''}
+        ${game.entries.map(e => `
+          <div class="entry-row ${game.winner && game.winner.id === e.id ? 'winner-entry' : ''}">
+            <div class="entry-info">
+              <span class="entry-name">${game.winner && game.winner.id === e.id ? '\ud83d\udc51 ' : ''}${escHtml(e.name)}</span>
+              <span class="entry-answer">${escHtml(String(e.answer))}</span>
+            </div>
+            ${isActive || isReveal ? `<button class="btn-delete-entry" onclick="deleteEntry('${game.id}', ${e.id}, '${escAttr(e.name)}')" title="Delete">\ud83d\uddd1\ufe0f</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="actions">
+        ${isActive ? `<button class="btn btn-reveal" onclick="revealWinner('${game.id}')">\ud83c\udfc6 End Game & Reveal Winner</button>` : ''}
+        ${isActive || isReveal ? `<button class="btn btn-reset" onclick="resetGame('${game.id}')">\ud83d\udd04 Reset Game</button>` : ''}
+      </div>
+
+      <div class="test-mode">
+        <button class="test-mode-toggle" onclick="toggleTestMode(this)">
+          <span>\ud83e\uddea Test & Manage</span>
+          <span>\u25bc</span>
+        </button>
+        <div class="test-mode-body" id="test-${game.id}">
+          <div class="test-mode-note">Visible to host only. Use before the party to clean up test data.</div>
+          <div class="test-actions">
+            ${isActive ? `<button class="btn-clear" onclick="clearEntries('${game.id}')">Clear All Answers</button>` : ''}
+            <button class="btn-clear" onclick="resetGame('${game.id}')">Reset Entire Game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleTestMode(btn) {
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+  btn.querySelector('span:last-child').textContent = body.classList.contains('open') ? '\u25b2' : '\u25bc';
+}
+
+async function api(url, method = 'POST', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+async function setupGame(gameId) {
+  const answer = document.getElementById(`answer-${gameId}`).value.trim();
+  const prize = document.getElementById(`prize-${gameId}`).value.trim();
+  if (!answer) return toast('Please enter the correct answer', 'error');
+  try {
+    await api(`/api/host/setup/${gameId}`, 'POST', { correctAnswer: answer, prize });
+    toast(`${gameId === 'belly' ? 'Belly' : 'Poop'} game is brewing!`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function revealWinner(gameId) {
+  if (!confirm('End the game and reveal the winner?')) return;
+  try {
+    const data = await api(`/api/host/reveal/${gameId}`);
+    toast(`Winner: ${data.winner?.name || 'Unknown'}!`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function resetGame(gameId) {
+  if (!confirm('Reset this game? All answers will be cleared.')) return;
+  try {
+    await api(`/api/host/reset/${gameId}`);
+    toast('Game reset!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function resetAll() {
+  if (!confirm('This will reset ALL games and delete ALL answers. Are you sure?')) return;
+  if (!confirm('Really sure? This cannot be undone.')) return;
+  try {
+    await api('/api/host/reset-all');
+    toast('All games reset!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteEntry(gameId, entryId, name) {
+  if (!confirm(`Remove ${name}'s answer?`)) return;
+  try {
+    await api(`/api/host/entry/${gameId}/${entryId}`, 'DELETE');
+    toast(`Removed ${name}'s answer`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function clearEntries(gameId) {
+  const game = currentState?.games[gameId];
+  const count = game?.entries?.length || 0;
+  if (!confirm(`Clear all ${count} answers for ${game?.title}? This cannot be undone.`)) return;
+  try {
+    await api(`/api/host/entries/${gameId}`, 'DELETE');
+    toast('All answers cleared!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Price is Right Host Controls ──────────────────────────────────────
+async function pirStart() {
+  const prize = document.getElementById('pir-prize')?.value.trim() || '';
+  try {
+    await api('/api/host/pir/start', 'POST', { prize });
+    toast('Price is Right started! Players can join now.', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function pirSetRound() {
+  const productName = document.getElementById('pir-product')?.value.trim();
+  const correctPrice = document.getElementById('pir-price')?.value.trim();
+  if (!productName) return toast('Enter a product name', 'error');
+  if (!correctPrice) return toast('Enter the correct price', 'error');
+  try {
+    const data = await api('/api/host/pir/set-round', 'POST', { productName, correctPrice: parseFloat(correctPrice) });
+    toast(`Round ${data.round} started!`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function pirEndRound() {
+  const pir = currentState?.priceIsRight;
+  if (!confirm(`End Round ${pir?.currentRound}? This will calculate who advances.`)) return;
+  try {
+    await api('/api/host/pir/end-round');
+    toast('Round ended! Results are in.', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function pirEnd() {
+  if (!confirm('End the Price is Right game? TV will return to normal.')) return;
+  try {
+    await api('/api/host/pir/end');
+    toast('Price is Right ended. TV is back to normal.', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function toast(message, type = 'info') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escAttr(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+connect();
+</script>
+</body>
+</html>

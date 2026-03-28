@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cafe bebe - Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Sacramento&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brown: #5c3317;
+    --brown-light: #8b5e3c;
+    --brown-dark: #3e1f0d;
+    --pink: #f2a6b8;
+    --pink-light: #fce4ec;
+    --pink-stripe: #f8c8d8;
+    --cream: #fdf8f0;
+    --cream-dark: #f5ead6;
+    --white: #fffef9;
+    --text: #3e1f0d;
+    --gold: #c49b63;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--pink-stripe) 0px,
+      var(--pink-stripe) 28px,
+      var(--cream) 28px,
+      var(--cream) 56px
+    );
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+  }
+
+  h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+  .container {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  /* Header */
+  .game-header {
+    text-align: center;
+    margin-bottom: 20px;
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 20px;
+    border: 3px solid var(--brown);
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.1);
+    position: relative;
+  }
+  /* Awning top */
+  .game-header::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: -3px;
+    right: -3px;
+    height: 14px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--brown) 0px,
+      var(--brown) 24px,
+      var(--cream) 24px,
+      var(--cream) 48px
+    );
+    border-radius: 18px 18px 0 0;
+    border: 3px solid var(--brown);
+    border-bottom: none;
+  }
+  .game-emoji { font-size: 3rem; display: block; margin-bottom: 4px; }
+  .game-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--brown);
+  }
+  .game-desc {
+    color: var(--brown-light);
+    font-size: 0.95rem;
+    margin-top: 2px;
+  }
+  .cafe-label {
+    font-family: 'Sacramento', cursive;
+    font-size: 1.4rem;
+    color: var(--pink);
+    margin-bottom: 2px;
+  }
+
+  /* States */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* Waiting State */
+  .waiting-box {
+    text-align: center;
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 40px 24px;
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.08);
+    border: 2px solid var(--cream-dark);
+  }
+  .waiting-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    animation: steamCup 2s ease-in-out infinite;
+  }
+  @keyframes steamCup {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .waiting-text {
+    font-size: 1.1rem;
+    color: var(--brown-light);
+    font-weight: 500;
+  }
+  .waiting-dots {
+    display: inline-block;
+    animation: dotPulse 1.5s infinite;
+  }
+  @keyframes dotPulse {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+  }
+  .waiting-sub {
+    color: var(--brown-light);
+    margin-top: 8px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  /* Brewing loader dots */
+  .brew-dots { display: inline-flex; gap: 4px; margin-left: 4px; }
+  .brew-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brown-light);
+    animation: brewDot 1.4s infinite ease-in-out;
+  }
+  .brew-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .brew-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes brewDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Form */
+  .form-card {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.08);
+    border: 2px solid var(--cream-dark);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+    color: var(--brown);
+  }
+  .form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--cream-dark);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: var(--text);
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--brown-light);
+    box-shadow: 0 0 0 3px rgba(92, 51, 23, 0.1);
+  }
+  .form-group input::placeholder { color: #c4a882; }
+
+  /* Submit Button */
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: var(--brown);
+    color: white;
+    box-shadow: 0 4px 12px rgba(62, 31, 13, 0.2);
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-submit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+    animation: buttonSheen 3s infinite;
+  }
+  @keyframes buttonSheen {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(62, 31, 13, 0.3); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Success State */
+  .success-card {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.08);
+    border: 2px solid var(--cream-dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .success-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes successPop {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+  .success-text {
+    font-size: 1.1rem;
+    color: var(--brown);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .success-answer {
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: 'Sacramento', cursive;
+    color: var(--brown-dark);
+    margin-bottom: 16px;
+  }
+  .btn-change {
+    background: none;
+    border: 2px solid var(--brown-light);
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--brown);
+    transition: all 0.2s;
+  }
+  .btn-change:hover { background: var(--cream-dark); }
+
+  /* Latte art animation on success */
+  .latte-art {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 40%, var(--cream-dark) 20%, var(--brown-light) 21%, var(--brown-light) 25%, var(--cream-dark) 26%);
+    border: 4px solid var(--brown);
+    animation: latteSwirl 3s ease-in-out infinite;
+  }
+  @keyframes latteSwirl {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+  }
+
+  /* Reveal State */
+  .reveal-card {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(62, 31, 13, 0.08);
+    border: 3px solid var(--gold);
+  }
+  .reveal-trophy {
+    font-size: 3.5rem;
+    margin-bottom: 8px;
+    animation: trophySpin 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes trophySpin {
+    from { transform: scale(0) rotate(-180deg); }
+    to { transform: scale(1) rotate(0deg); }
+  }
+  .reveal-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .reveal-winner {
+    font-size: 2.8rem;
+    font-weight: 900;
+    font-family: 'Sacramento', cursive;
+    margin: 4px 0 12px;
+    color: var(--brown-dark);
+    animation: nameAppear 0.5s ease-out 0.3s both;
+  }
+  @keyframes nameAppear {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal-answer {
+    font-size: 0.95rem;
+    color: var(--brown-light);
+    margin-bottom: 4px;
+  }
+  .reveal-prize {
+    display: inline-block;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    padding: 8px 22px;
+    border-radius: 999px;
+    font-weight: 700;
+    color: var(--brown-dark);
+    margin-top: 12px;
+    border: 2px solid var(--gold);
+    animation: prizeSlide 0.4s ease-out 0.5s both;
+  }
+  @keyframes prizeSlide {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .reveal-you {
+    margin-top: 16px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    border: 2px solid var(--cream-dark);
+  }
+  .reveal-you strong { color: var(--brown-dark); }
+
+  /* Mini confetti on reveal */
+  .mini-confetti {
+    position: fixed;
+    top: -10px;
+    z-index: 100;
+    pointer-events: none;
+    animation: miniConfettiFall linear forwards;
+  }
+  @keyframes miniConfettiFall {
+    to { top: 110vh; transform: rotate(720deg); }
+  }
+
+  /* Error */
+  .error-msg {
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    display: none;
+    border: 1px solid #fecaca;
+    animation: shake 0.4s ease-in-out;
+  }
+  .error-msg.show { display: block; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* Connection indicator */
+  .connection {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #b91c1c;
+    transition: background 0.3s;
+    z-index: 50;
+  }
+  .connection.connected { background: #16a34a; }
+</style>
+</head>
+<body>
+
+<div class="connection" id="connDot"></div>
+
+<div class="container">
+  <div class="game-header">
+    <div class="cafe-label">Cafe bebe</div>
+    <span class="game-emoji" id="gameEmoji"></span>
+    <h1 class="game-title" id="gameTitle">Loading...</h1>
+    <p class="game-desc" id="gameDesc"></p>
+  </div>
+
+  <!-- Waiting State -->
+  <div class="state" id="stateWaiting">
+    <div class="waiting-box">
+      <div class="waiting-icon">☕</div>
+      <div class="waiting-text">
+        Your order is being prepared
+        <span class="brew-dots"><span></span><span></span><span></span></span>
+      </div>
+      <p class="waiting-sub">The host will start the game soon!</p>
+    </div>
+  </div>
+
+  <!-- Active State: Form -->
+  <div class="state" id="stateActive">
+    <div class="form-card">
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="form-group">
+        <label>☕ Your Name</label>
+        <input type="text" id="inputName" placeholder="Enter your name" autocomplete="name">
+      </div>
+
+      <div class="form-group">
+        <label id="answerLabel">🍫 Your Answer</label>
+        <input type="text" id="inputAnswer" placeholder="">
+      </div>
+
+      <button class="btn-submit" id="btnSubmit" onclick="submitAnswer()">Place My Order ☕</button>
+    </div>
+  </div>
+
+  <!-- Success State -->
+  <div class="state" id="stateSuccess">
+    <div class="success-card">
+      <div class="latte-art"></div>
+      <div class="success-text">Order received!</div>
+      <div class="success-answer" id="successAnswer"></div>
+      <button class="btn-change" onclick="changeAnswer()">Change My Order</button>
+    </div>
+  </div>
+
+  <!-- Reveal State -->
+  <div class="state" id="stateReveal">
+    <div class="reveal-card">
+      <div class="reveal-trophy">☕ 🏆</div>
+      <div class="reveal-label">Winner</div>
+      <div class="reveal-winner" id="revealWinner"></div>
+      <div class="reveal-answer" id="revealAnswer"></div>
+      <div class="reveal-answer" id="revealCorrect"></div>
+      <div class="reveal-prize" id="revealPrize"></div>
+      <div class="reveal-you" id="revealYou"></div>
+    </div>
+  </div>
+
+  <!-- PIR: Lobby / Waiting -->
+  <div class="state" id="pirLobbyState">
+    <div class="form-card" style="text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
+      <h2 style="font-family: 'Playfair Display', serif; color: var(--brown); margin-bottom: 4px;">Price is Right</h2>
+      <p style="color: var(--brown-light); margin-bottom: 16px;">Baby Edition</p>
+      <div class="form-group">
+        <label>☕ Your Name</label>
+        <input type="text" id="pirName" placeholder="Enter your name" autocomplete="name">
+      </div>
+      <p style="color: var(--brown-light); font-size: 0.9rem;" id="pirLobbyMsg">Enter your name to get ready! The host will start Round 1 soon.</p>
+    </div>
+  </div>
+
+  <!-- PIR: Active Round (can guess) -->
+  <div class="state" id="pirActiveState">
+    <div class="form-card">
+      <div class="error-msg" id="pirError"></div>
+      <div style="text-align: center; margin-bottom: 12px;">
+        <div id="pirRoundLabel" style="background: var(--gold); color: white; display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">ROUND 1</div>
+      </div>
+      <div style="text-align: center; font-size: 1.4rem; font-weight: 700; color: var(--brown); margin-bottom: 16px;" id="pirProductLabel"></div>
+      <div class="form-group">
+        <label>💰 Your Price Guess ($)</label>
+        <input type="number" id="pirGuessInput" placeholder="e.g. 24.99" step="0.01" inputmode="decimal">
+      </div>
+      <button class="btn-submit" id="pirSubmitBtn" onclick="submitPIRGuess()">Lock In My Guess 💰</button>
+    </div>
+  </div>
+
+  <!-- PIR: Submitted (waiting for round end) -->
+  <div class="state" id="pirSubmittedState">
+    <div class="success-card">
+      <div class="latte-art"></div>
+      <div class="success-text">Guess locked in!</div>
+      <div class="success-answer" id="pirMyGuess"></div>
+      <button class="btn-change" onclick="changePIRGuess()">Change My Guess</button>
+    </div>
+  </div>
+
+  <!-- PIR: Eliminated -->
+  <div class="state" id="pirEliminatedState">
+    <div class="form-card" style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">😔</div>
+      <div style="font-size: 1.2rem; font-weight: 700; color: var(--brown); margin-bottom: 8px;">You've been eliminated!</div>
+      <p style="color: var(--brown-light);">Great playing! Watch the TV to see who wins.</p>
+      <div id="pirEliminatedRound" style="margin-top: 12px; color: var(--brown-light); font-size: 0.9rem;"></div>
+    </div>
+  </div>
+
+  <!-- PIR: Advanced (between rounds) -->
+  <div class="state" id="pirAdvancedState">
+    <div class="form-card" style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
+      <div style="font-size: 1.2rem; font-weight: 700; color: var(--brown); margin-bottom: 8px;">You advanced!</div>
+      <p style="color: var(--brown-light);" id="pirAdvancedMsg">Get ready for the next round!</p>
+    </div>
+  </div>
+
+  <!-- PIR: Finished -->
+  <div class="state" id="pirFinishedState">
+    <div class="reveal-card">
+      <div class="reveal-trophy">💰 🏆</div>
+      <div class="reveal-label">Winner</div>
+      <div class="reveal-winner" id="pirRevealWinner"></div>
+      <div class="reveal-answer" id="pirRevealGuess"></div>
+      <div class="reveal-prize" id="pirRevealPrize"></div>
+      <div class="reveal-you" id="pirRevealYou"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+const gameId = location.pathname.split('/').pop();
+
+let ws;
+let submitted = false;
+let myName = '';
+let myAnswer = '';
+let hasShownReveal = false;
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => document.getElementById('connDot').classList.add('connected');
+  ws.onclose = () => {
+    document.getElementById('connDot').classList.remove('connected');
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') handleState(msg.data);
+  };
+}
+
+function handleState(state) {
+  // Price is Right branching
+  if (gameId === 'priceisright') {
+    handlePIRState(state.priceIsRight);
+    return;
+  }
+
+  const game = state.games[gameId];
+  if (!game) {
+    document.getElementById('gameTitle').textContent = 'Game Not Found';
+    return;
+  }
+
+  document.getElementById('gameEmoji').textContent = game.emoji;
+  document.getElementById('gameTitle').textContent = game.title;
+  document.getElementById('gameDesc').textContent = game.description;
+  document.title = game.title + ' - Cafe bebe';
+
+  if (gameId === 'belly') {
+    document.getElementById('inputAnswer').type = 'number';
+    document.getElementById('inputAnswer').step = '0.1';
+    document.getElementById('inputAnswer').placeholder = 'e.g. 52.3';
+    document.getElementById('inputAnswer').inputMode = 'decimal';
+    document.getElementById('answerLabel').textContent = '\u2615 Your Guess (inches)';
+  } else {
+    document.getElementById('inputAnswer').type = 'text';
+    document.getElementById('inputAnswer').placeholder = 'e.g. Snickers';
+    document.getElementById('answerLabel').textContent = '\ud83c\udf6b Which candy bar is it?';
+  }
+
+  hideAll();
+
+  if (game.status === 'waiting') {
+    show('stateWaiting');
+    hasShownReveal = false;
+  } else if (game.status === 'active') {
+    if (submitted) {
+      show('stateSuccess');
+    } else {
+      show('stateActive');
+      if (myName) document.getElementById('inputName').value = myName;
+    }
+    hasShownReveal = false;
+  } else if (game.status === 'reveal') {
+    show('stateReveal');
+    renderReveal(game);
+    if (!hasShownReveal) {
+      hasShownReveal = true;
+      launchMiniConfetti();
+    }
+  }
+}
+
+function hideAll() {
+  document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+}
+
+function show(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+async function submitAnswer() {
+  const name = document.getElementById('inputName').value.trim();
+  const answer = document.getElementById('inputAnswer').value.trim();
+
+  if (!name) return showError('Please enter your name!');
+  if (!answer) return showError('Please enter your answer!');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = 'Brewing...';
+
+  try {
+    const res = await fetch(`/api/entry/${gameId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, answer })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    myName = name;
+    myAnswer = answer;
+    submitted = true;
+    document.getElementById('successAnswer').textContent = answer;
+
+    hideAll();
+    show('stateSuccess');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Place My Order \u2615';
+  }
+}
+
+function changeAnswer() {
+  submitted = false;
+  hideAll();
+  show('stateActive');
+  document.getElementById('inputName').value = myName;
+  document.getElementById('inputAnswer').value = '';
+  document.getElementById('inputAnswer').focus();
+}
+
+function renderReveal(game) {
+  if (game.winner) {
+    document.getElementById('revealWinner').textContent = game.winner.name;
+    document.getElementById('revealAnswer').textContent = `Their answer: ${game.winner.answer}`;
+    document.getElementById('revealCorrect').textContent = `Correct answer: ${game.correctAnswer}`;
+    document.getElementById('revealPrize').textContent = game.prize ? `\ud83c\udf81 ${game.prize}` : '\ud83c\udf89 Congratulations!';
+    document.getElementById('revealPrize').style.display = 'inline-block';
+  }
+
+  const youEl = document.getElementById('revealYou');
+  if (myName) {
+    const myEntry = game.entries.find(e => e.name.toLowerCase() === myName.toLowerCase());
+    if (myEntry) {
+      const isWinner = game.winner && game.winner.id === myEntry.id;
+      youEl.innerHTML = isWinner
+        ? '<strong>\ud83c\udf89 That\'s YOU! You won!</strong>'
+        : `<strong>Your answer:</strong> ${escHtml(myEntry.answer)}`;
+      youEl.style.display = 'block';
+    } else {
+      youEl.style.display = 'none';
+    }
+  } else {
+    youEl.style.display = 'none';
+  }
+}
+
+function launchMiniConfetti() {
+  const colors = ['#f2a6b8', '#5c3317', '#c49b63', '#fce4ec', '#8b5e3c', '#fde68a'];
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'mini-confetti';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.width = (Math.random() * 6 + 4) + 'px';
+    piece.style.height = (Math.random() * 6 + 4) + 'px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    piece.style.animationDelay = (Math.random() * 1) + 's';
+    document.body.appendChild(piece);
+  }
+  setTimeout(() => document.querySelectorAll('.mini-confetti').forEach(el => el.remove()), 4000);
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Price is Right Guest Logic ────────────────────────────────────────
+let pirSubmitted = false;
+let pirMyGuess = '';
+
+function handlePIRState(pir) {
+  // Update header for PIR
+  document.getElementById('gameEmoji').textContent = '\ud83d\udcb0';
+  document.getElementById('gameTitle').textContent = 'Price is Right';
+  document.getElementById('gameDesc').textContent = 'Baby Edition';
+  document.title = 'Price is Right - Cafe bebe';
+
+  // Restore name from normal game or PIR input
+  const pirNameInput = document.getElementById('pirName');
+  if (!myName && pirNameInput && pirNameInput.value.trim()) {
+    myName = pirNameInput.value.trim();
+  }
+
+  hideAll();
+
+  if (!pir || !pir.active || pir.status === 'idle' || pir.status === 'lobby') {
+    show('pirLobbyState');
+    if (myName) pirNameInput.value = myName;
+    const msg = document.getElementById('pirLobbyMsg');
+    if (pir && pir.status === 'lobby') {
+      msg.textContent = pir.players.length + ' player' + (pir.players.length !== 1 ? 's' : '') + ' joined. Waiting for Round 1...';
+    }
+    return;
+  }
+
+  const nameLower = (myName || '').toLowerCase();
+  const isEliminated = pir.eliminatedPlayers.includes(nameLower);
+
+  if (pir.status === 'round-active') {
+    // Get name from input if not set yet
+    if (!myName) {
+      const val = document.getElementById('pirName')?.value.trim();
+      if (val) myName = val;
+    }
+
+    if (isEliminated) {
+      show('pirEliminatedState');
+      document.getElementById('pirEliminatedRound').textContent = 'Round ' + pir.currentRound + ' is in progress.';
+      return;
+    }
+
+    // Check if not eligible for round 2+
+    if (pir.currentRound > 1 && !pir.advancingPlayers.includes(nameLower) && nameLower) {
+      show('pirEliminatedState');
+      return;
+    }
+
+    if (pirSubmitted) {
+      show('pirSubmittedState');
+    } else {
+      show('pirActiveState');
+      const round = pir.rounds[pir.currentRound - 1];
+      document.getElementById('pirRoundLabel').textContent = 'ROUND ' + pir.currentRound + ' of 3';
+      document.getElementById('pirProductLabel').textContent = round.productName;
+      if (myName) {
+        // Pre-fill name if we already know it — skip to guess only
+      }
+    }
+    return;
+  }
+
+  if (pir.status === 'round-reveal') {
+    pirSubmitted = false; // Reset for next round
+    const round = pir.rounds[pir.currentRound - 1];
+    const justEliminated = round.eliminatedNames.includes(nameLower);
+
+    if (justEliminated || isEliminated) {
+      show('pirEliminatedState');
+      document.getElementById('pirEliminatedRound').textContent =
+        'You were eliminated in Round ' + pir.currentRound + '. Watch the TV for the rest!';
+    } else {
+      show('pirAdvancedState');
+      document.getElementById('pirAdvancedMsg').textContent =
+        pir.currentRound < 3
+          ? 'Get ready for Round ' + (pir.currentRound + 1) + '!'
+          : 'Final results coming...';
+    }
+    return;
+  }
+
+  if (pir.status === 'finished') {
+    show('pirFinishedState');
+    if (pir.winner) {
+      document.getElementById('pirRevealWinner').textContent = pir.winner.name;
+      document.getElementById('pirRevealGuess').textContent = 'Guessed $' + pir.winner.guess.toFixed(2) + ' (off by $' + pir.winner.diff.toFixed(2) + ')';
+      document.getElementById('pirRevealPrize').textContent = pir.prize ? '\ud83c\udf81 ' + pir.prize : '\ud83c\udf89 Congratulations!';
+      document.getElementById('pirRevealPrize').style.display = 'inline-block';
+
+      const youEl = document.getElementById('pirRevealYou');
+      if (nameLower && pir.winner.name.toLowerCase() === nameLower) {
+        youEl.innerHTML = '<strong>\ud83c\udf89 That\'s YOU! You won!</strong>';
+        youEl.style.display = 'block';
+      } else if (nameLower) {
+        youEl.innerHTML = '<strong>Great game! Better luck next time.</strong>';
+        youEl.style.display = 'block';
+      } else {
+        youEl.style.display = 'none';
+      }
+    }
+    return;
+  }
+}
+
+async function submitPIRGuess() {
+  // Get name from PIR lobby input if not already set
+  if (!myName) {
+    const lobbyName = document.getElementById('pirName')?.value.trim();
+    if (lobbyName) myName = lobbyName;
+  }
+  if (!myName) return showPIRError('Enter your name on the previous screen first!');
+
+  const guess = document.getElementById('pirGuessInput')?.value.trim();
+  if (!guess) return showPIRError('Please enter a price guess!');
+
+  const btn = document.getElementById('pirSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    const res = await fetch('/api/pir/entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: myName, guess: parseFloat(guess) })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    pirMyGuess = guess;
+    pirSubmitted = true;
+    document.getElementById('pirMyGuess').textContent = '$' + parseFloat(guess).toFixed(2);
+
+    hideAll();
+    show('pirSubmittedState');
+  } catch (e) {
+    showPIRError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Lock In My Guess \ud83d\udcb0';
+  }
+}
+
+function changePIRGuess() {
+  pirSubmitted = false;
+  hideAll();
+  show('pirActiveState');
+  document.getElementById('pirGuessInput').value = '';
+  document.getElementById('pirGuessInput').focus();
+}
+
+function showPIRError(msg) {
+  const el = document.getElementById('pirError');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+connect();
+</script>
+</body>
+</html>
