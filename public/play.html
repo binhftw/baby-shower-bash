@@ -585,10 +585,19 @@ function handleState(state) {
     document.getElementById('inputAnswer').placeholder = 'e.g. 52.3';
     document.getElementById('inputAnswer').inputMode = 'decimal';
     document.getElementById('answerLabel').textContent = '\u2615 Your Guess (inches)';
+    document.getElementById('btnSubmit').textContent = 'Place My Order \u2615';
+  } else if (gameId === 'ivf') {
+    document.getElementById('inputAnswer').type = 'number';
+    document.getElementById('inputAnswer').step = '1';
+    document.getElementById('inputAnswer').placeholder = 'e.g. 47';
+    document.getElementById('inputAnswer').inputMode = 'numeric';
+    document.getElementById('answerLabel').textContent = '\ud83d\udc89 Your Guess (# of needles)';
+    document.getElementById('btnSubmit').textContent = 'Submit My Guess \ud83d\udc89';
   } else {
     document.getElementById('inputAnswer').type = 'text';
     document.getElementById('inputAnswer').placeholder = 'e.g. Snickers';
     document.getElementById('answerLabel').textContent = '\ud83c\udf6b Which candy bar is it?';
+    document.getElementById('btnSubmit').textContent = 'Place My Order \u2615';
   }
 
   hideAll();
@@ -653,7 +662,7 @@ async function submitAnswer() {
     showError(e.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Place My Order \u2615';
+    btn.textContent = gameId === 'ivf' ? 'Submit My Guess \ud83d\udc89' : 'Place My Order \u2615';
   }
 }
 

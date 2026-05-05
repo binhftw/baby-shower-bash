@@ -47,6 +47,18 @@ function createInitialState() {
         winner: null,
         tiedEntries: [],
         prize: ''
+      },
+      ivf: {
+        id: 'ivf',
+        title: 'IVF Needle Count',
+        emoji: '\ud83d\udc89',
+        description: "How many needles did Mai endure to bring this little bean to life? Take your best guess!",
+        status: 'waiting',
+        correctAnswer: null,
+        entries: [],
+        winner: null,
+        tiedEntries: [],
+        prize: ''
       }
     },
     priceIsRight: {
@@ -447,7 +459,7 @@ app.get('/play/:gameId', (req, res) => res.sendFile(path.join(__dirname, 'public
 // If there's a tie, winner is null and tiedEntries has the tied group.
 // The TV screen runs a random name picker to break the tie live.
 function calculateWinner(game) {
-  if (game.id === 'belly') {
+  if (game.id === 'belly' || game.id === 'ivf') {
     const correct = parseFloat(game.correctAnswer);
     if (isNaN(correct)) return { winner: game.entries[0] || null, tiedEntries: [] };
 

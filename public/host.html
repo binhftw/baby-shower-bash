@@ -481,9 +481,9 @@ function renderGameCard(game) {
 
       ${isWaiting ? `
         <div class="setup-form">
-          <label>Correct Answer ${game.id === 'belly' ? '(number)' : ''}</label>
-          <input type="${game.id === 'belly' ? 'number' : 'text'}" id="answer-${game.id}"
-            placeholder="${game.id === 'belly' ? 'e.g. 42.5' : 'e.g. Snickers'}" step="0.1">
+          <label>Correct Answer ${game.id === 'belly' ? '(inches)' : game.id === 'ivf' ? '(# of needles)' : ''}</label>
+          <input type="${(game.id === 'belly' || game.id === 'ivf') ? 'number' : 'text'}" id="answer-${game.id}"
+            placeholder="${game.id === 'belly' ? 'e.g. 42.5' : game.id === 'ivf' ? 'e.g. 47' : 'e.g. Snickers'}" step="${game.id === 'ivf' ? '1' : '0.1'}">
           <label>Prize Description</label>
           <input type="text" id="prize-${game.id}" placeholder="e.g. Gift card">
           <button class="btn btn-start" onclick="setupGame('${game.id}')">\u2615 Start Game</button>
