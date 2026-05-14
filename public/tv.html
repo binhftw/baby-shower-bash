@@ -33,7 +33,7 @@
     );
     color: var(--text);
     min-height: 100vh;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   h1, h2, h3 { font-family: 'Playfair Display', serif; }
@@ -158,8 +158,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    padding: 28px 32px 24px;
-    height: calc(100vh - 170px);
+    padding: 28px 32px 48px;
   }
 
   .game-card {
@@ -233,16 +232,16 @@
   .qr-section {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin: 10px 0;
-    padding: 14px;
+    gap: 12px;
+    margin: 8px 0;
+    padding: 10px 12px;
     background: white;
     border-radius: 14px;
     border: 2px dashed var(--pink);
   }
-  .qr-section img { width: 96px; height: 96px; border-radius: 8px; }
+  .qr-section img { width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0; }
   .qr-text {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--brown);
     font-weight: 700;
   }
@@ -251,48 +250,77 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
   }
-  .qr-url { font-size: 0.7rem; color: var(--brown-light); word-break: break-all; margin-top: 4px; opacity: 0.7; }
+  .qr-url { font-size: 0.65rem; color: var(--brown-light); word-break: break-all; margin-top: 2px; opacity: 0.7; }
 
   /* Entries List */
   .entries-wrapper {
     flex: 1;
     overflow-y: auto;
     margin-top: 8px;
-    padding-right: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    align-content: start;
   }
   .entries-wrapper::-webkit-scrollbar { width: 4px; }
   .entries-wrapper::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 4px; }
 
   .entry-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    background: var(--pink-light);
+    border-radius: 12px;
+    border: 2px solid var(--pink);
+  }
+  .entry-count-number {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--brown);
+    font-family: 'Playfair Display', serif;
+    line-height: 1;
+  }
+  .entry-count-label {
     font-size: 0.85rem;
     color: var(--brown-light);
-    margin-bottom: 8px;
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 1.2;
   }
 
   .entry-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 14px;
-    border-radius: 10px;
-    margin-bottom: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
     background: white;
     animation: slideInEntry 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-left: 3px solid transparent;
+    min-width: 0;
   }
-  .entry-row:nth-child(even) { background: var(--pink-light); }
+  .entry-row:nth-child(4n+3), .entry-row:nth-child(4n+4) { background: var(--pink-light); }
   .entry-row:hover { border-left-color: var(--pink); }
   .entry-name {
     font-weight: 600;
     color: var(--brown-dark);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+    margin-right: 6px;
   }
   .entry-answer {
     color: var(--brown);
     font-weight: 700;
+    font-size: 0.8rem;
     background: var(--cream-dark);
-    padding: 2px 10px;
-    border-radius: 8px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    flex-shrink: 0;
   }
 
   .winner-entry {
@@ -300,6 +328,7 @@
     border: 2px solid var(--gold);
     border-left: 4px solid var(--gold);
     animation: winnerShine 2s ease-in-out infinite;
+    grid-column: span 2;
   }
   @keyframes winnerShine {
     0%, 100% { box-shadow: 0 0 0 rgba(196, 155, 99, 0); }
@@ -311,6 +340,92 @@
     0%, 100% { transform: translateY(0) rotate(0deg); }
     25% { transform: translateY(-2px) rotate(-5deg); }
     75% { transform: translateY(-2px) rotate(5deg); }
+  }
+
+  /* Tie callout on TV game card */
+  .tv-tie-banner {
+    background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+    border: 3px solid var(--pink);
+    border-radius: 16px;
+    padding: 12px 16px;
+    text-align: center;
+    margin: 8px 0;
+    animation: tiePulse 2s ease-in-out infinite;
+  }
+  @keyframes tiePulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(242,166,184,0.15); }
+    50% { box-shadow: 0 0 0 7px rgba(242,166,184,0.3); }
+  }
+  .tv-tie-icon { font-size: 1.6rem; display: block; }
+  .tv-tie-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin: 4px 0 2px;
+  }
+  .tv-tie-names {
+    font-size: 0.82rem;
+    color: var(--brown-light);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tv-tie-hint {
+    font-size: 0.75rem;
+    color: var(--brown-light);
+    font-style: italic;
+  }
+  .tv-tie-spin-btn {
+    margin-top: 8px;
+    background: var(--pink);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .tv-tie-spin-btn:hover { background: #e8849a; transform: scale(1.05); }
+
+  /* Winner callout on TV game card */
+  .tv-winner-banner {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    padding: 14px 16px;
+    text-align: center;
+    margin: 8px 0;
+    box-shadow: 0 0 0 4px rgba(196,155,99,0.15), 0 4px 20px rgba(196,155,99,0.35);
+    animation: tvWinnerPulse 2s ease-in-out infinite;
+  }
+  @keyframes tvWinnerPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(196,155,99,0.15), 0 4px 20px rgba(196,155,99,0.35); }
+    50% { box-shadow: 0 0 0 8px rgba(196,155,99,0.3), 0 4px 28px rgba(196,155,99,0.55); }
+  }
+  .tv-winner-crown { font-size: 2rem; display: block; animation: crownBob 1.2s ease-in-out infinite; }
+  .tv-winner-name {
+    font-size: 2rem;
+    font-family: 'Sacramento', cursive;
+    color: var(--brown);
+    margin: 2px 0 6px;
+    display: block;
+  }
+  .tv-winner-detail {
+    font-size: 0.82rem;
+    color: var(--brown-light);
+    font-weight: 600;
+  }
+  .tv-winner-prize {
+    display: inline-block;
+    margin-top: 6px;
+    background: var(--gold);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 999px;
   }
 
   .no-entries {
@@ -856,8 +971,8 @@
     <div class="tie-title">It's a Tie!</div>
     <div class="tie-subtitle" id="tieSubtitle">Multiple guests tied! Spinning to pick a winner...</div>
     <div class="spinner-window">
-      <span class="spinner-pointer-left">\u25b6</span>
-      <span class="spinner-pointer-right">\u25c0</span>
+      <span class="spinner-pointer-left">&#x25B6;</span>
+      <span class="spinner-pointer-right">&#x25C0;</span>
       <div class="spinner-track" id="spinnerTrack"></div>
     </div>
     <div class="tie-result" id="tieResult"></div>
@@ -1041,7 +1156,27 @@ function renderGames(games) {
         </div>
       </div>
 
-      <div class="entry-count">\u2615 ${game.entries.length} guess${game.entries.length !== 1 ? 'es' : ''} brewing</div>
+      <div class="entry-count">
+        <div class="entry-count-number">${game.entries.length}</div>
+        <div class="entry-count-label">guess${game.entries.length !== 1 ? 'es' : ''}<br>submitted \u2615</div>
+      </div>
+
+      ${game.status === 'reveal' && game.winner ? `
+        <div class="tv-winner-banner">
+          <span class="tv-winner-crown">\ud83d\udc51</span>
+          <span class="tv-winner-name">${escHtml(game.winner.name)}</span>
+          <div class="tv-winner-detail">Guessed: ${escHtml(String(game.winner.answer))} &nbsp;|&nbsp; Correct: ${escHtml(String(game.correctAnswer))}</div>
+          ${game.prize ? `<div class="tv-winner-prize">\ud83c\udf81 ${escHtml(game.prize)}</div>` : ''}
+        </div>
+      ` : ''}
+      ${game.status === 'reveal' && game.tiedEntries && game.tiedEntries.length > 1 ? `
+        <div class="tv-tie-banner">
+          <span class="tv-tie-icon">\ud83c\udfb0</span>
+          <div class="tv-tie-title">It's a Tie!</div>
+          <div class="tv-tie-names">${game.tiedEntries.map(e => escHtml(e.name)).join(' \u00b7 ')}</div>
+          <button class="tv-tie-spin-btn" onclick="showTiebreakerById('${game.id}')">\ud83c\udfb0 Spin the Wheel!</button>
+        </div>
+      ` : ''}
 
       <div class="entries-wrapper">
         ${game.entries.length === 0 ? '<div class="no-entries">Waiting for guests to order up their guesses...</div>' : ''}
@@ -1184,6 +1319,11 @@ function renderPIRScreen(pir) {
 let tieGame = null;
 let tieNames = [];
 let chosenWinner = null;
+
+function showTiebreakerById(gameId) {
+  const game = prevState && prevState.games && prevState.games[gameId];
+  if (game) showTiebreaker(game);
+}
 
 function showTiebreaker(game) {
   tieGame = game;
