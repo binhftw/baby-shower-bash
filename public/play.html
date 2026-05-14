@@ -484,7 +484,11 @@
     <div class="form-card">
       <div class="error-msg" id="pirError"></div>
       <div style="text-align: center; margin-bottom: 12px;">
-        <div id="pirRoundLabel" style="background: var(--gold); color: white; display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">ROUND 1</div>
+        <div id="pirRoundLabel" style="background: var(--gold); color: white; display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">ROUND 1 of 5</div>
+      </div>
+      <!-- Product image (shown if host provided one) -->
+      <div id="pirPlayerImageWrap" style="display:none; margin: 0 auto 14px; text-align:center;">
+        <img id="pirPlayerImage" src="" alt="" style="max-width:100%;max-height:200px;border-radius:12px;object-fit:contain;box-shadow:0 4px 16px rgba(62,31,13,0.15);">
       </div>
       <div style="text-align: center; font-size: 1.4rem; font-weight: 700; color: var(--brown); margin-bottom: 16px;" id="pirProductLabel"></div>
       <div class="form-group">
@@ -787,10 +791,18 @@ function handlePIRState(pir) {
     } else {
       show('pirActiveState');
       const round = pir.rounds[pir.currentRound - 1];
-      document.getElementById('pirRoundLabel').textContent = 'ROUND ' + pir.currentRound + ' of 3';
+      document.getElementById('pirRoundLabel').textContent =
+        'ROUND ' + pir.currentRound + ' of ' + (pir.totalRounds || 5);
       document.getElementById('pirProductLabel').textContent = round.productName;
-      if (myName) {
-        // Pre-fill name if we already know it — skip to guess only
+
+      // Show product image if provided
+      const imgWrap = document.getElementById('pirPlayerImageWrap');
+      const img = document.getElementById('pirPlayerImage');
+      if (round.imageUrl) {
+        img.src = round.imageUrl;
+        imgWrap.style.display = 'block';
+      } else {
+        imgWrap.style.display = 'none';
       }
     }
     return;
@@ -808,7 +820,7 @@ function handlePIRState(pir) {
     } else {
       show('pirAdvancedState');
       document.getElementById('pirAdvancedMsg').textContent =
-        pir.currentRound < 3
+        pir.currentRound < (pir.totalRounds || 5)
           ? 'Get ready for Round ' + (pir.currentRound + 1) + '!'
           : 'Final results coming...';
     }

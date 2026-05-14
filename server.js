@@ -65,6 +65,8 @@ function createInitialState() {
       active: false,
       status: 'idle',       // idle | lobby | round-active | round-reveal | finished
       currentRound: 0,
+      totalRounds: 5,
+      roundConfig: [],       // pre-configured: [{productName, correctPrice, imageUrl}]
       rounds: [],
       players: [],           // all player names (original case)
       advancingPlayers: [],  // lowercase names allowed to play current round
@@ -274,10 +276,15 @@ app.delete('/api/host/entries/:gameId', (req, res) => {
 // Start the game
 app.post('/api/host/pir/start', (req, res) => {
   const pir = state.priceIsRight;
-  const { prize } = req.body;
+  const { prize, rounds } = req.body;
+  if (!rounds || !Array.isArray(rounds) || rounds.length === 0) {
+    return res.status(400).json({ error: 'Round configurations are required' });
+  }
   pir.active = true;
   pir.status = 'lobby';
   pir.currentRound = 0;
+  pir.totalRounds = rounds.length;
+  pir.roundConfig = rounds;
   pir.rounds = [];
   pir.players = [];
   pir.advancingPlayers = [];
@@ -288,7 +295,7 @@ app.post('/api/host/pir/start', (req, res) => {
   res.json({ success: true });
 });
 
-// Set up and start a round
+// Set up and start a round (reads from pre-configured roundConfig)
 app.post('/api/host/pir/set-round', (req, res) => {
   const pir = state.priceIsRight;
   if (!pir.active) return res.status(400).json({ error: 'Game not active' });
@@ -296,16 +303,15 @@ app.post('/api/host/pir/set-round', (req, res) => {
     return res.status(400).json({ error: 'Cannot start a new round right now' });
   }
 
-  const { productName, correctPrice } = req.body;
-  if (!productName || correctPrice === undefined) {
-    return res.status(400).json({ error: 'Product name and correct price are required' });
-  }
+  const cfg = pir.roundConfig[pir.currentRound]; // 0-indexed (before increment)
+  if (!cfg) return res.status(400).json({ error: 'No round configuration found' });
 
   pir.currentRound++;
   pir.rounds.push({
     roundNumber: pir.currentRound,
-    productName: productName.trim(),
-    correctPrice: parseFloat(correctPrice),
+    productName: cfg.productName,
+    correctPrice: parseFloat(cfg.correctPrice),
+    imageUrl: cfg.imageUrl || '',
     entries: [],
     results: [],
     advancingNames: [],
@@ -394,22 +400,21 @@ app.post('/api/host/pir/end-round', (req, res) => {
   // Add diff to each result
   round.results.forEach(r => { r.diff = Math.abs(r.guess - correct); });
 
-  // Calculate how many advance
+  // Calculate how many advance — top 50%, minimum 2, until the final round
+  const totalRounds = pir.totalRounds || 5;
+  const isFinalRound = pir.currentRound >= totalRounds;
+
   let advanceCount;
-  if (pir.currentRound === 1) {
-    advanceCount = Math.min(5, Math.max(2, Math.ceil(round.entries.length * 0.2)));
-    // If very few players, just advance them all to keep it fun
-    if (round.entries.length <= 5) advanceCount = Math.min(round.entries.length, 5);
-    if (round.entries.length <= 2) advanceCount = round.entries.length;
-  } else if (pir.currentRound === 2) {
-    advanceCount = Math.min(2, round.entries.length);
+  if (isFinalRound) {
+    advanceCount = 0; // Last round — no advancement, pick winner
   } else {
-    advanceCount = 1; // Final round — one winner
+    advanceCount = Math.max(2, Math.round(round.entries.length * 0.5));
+    advanceCount = Math.min(advanceCount, round.entries.length);
   }
 
   // Determine who advances
-  const advancing = round.results.slice(0, advanceCount);
-  const eliminated = round.results.slice(advanceCount);
+  const advancing = isFinalRound ? [] : round.results.slice(0, advanceCount);
+  const eliminated = isFinalRound ? round.results.slice(1) : round.results.slice(advanceCount);
 
   round.advancingNames = advancing.map(e => e.name.toLowerCase());
   round.eliminatedNames = eliminated.map(e => e.name.toLowerCase());
@@ -418,11 +423,11 @@ app.post('/api/host/pir/end-round', (req, res) => {
   pir.eliminatedPlayers = [...new Set([...pir.eliminatedPlayers, ...round.eliminatedNames])];
 
   // If final round, set winner
-  if (pir.currentRound === 3 || (pir.currentRound >= 2 && advanceCount <= 1)) {
-    pir.winner = advancing[0] ? {
-      name: advancing[0].name,
-      guess: advancing[0].guess,
-      diff: advancing[0].diff
+  if (isFinalRound) {
+    pir.winner = round.results[0] ? {
+      name: round.results[0].name,
+      guess: round.results[0].guess,
+      diff: round.results[0].diff
     } : null;
     pir.status = 'finished';
   } else {
@@ -439,6 +444,8 @@ app.post('/api/host/pir/end', (req, res) => {
   pir.active = false;
   pir.status = 'idle';
   pir.currentRound = 0;
+  pir.totalRounds = 5;
+  pir.roundConfig = [];
   pir.rounds = [];
   pir.players = [];
   pir.advancingPlayers = [];

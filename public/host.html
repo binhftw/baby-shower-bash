@@ -369,9 +369,23 @@ function renderPIR(pir) {
           <span class="game-title">Price is Right: Baby Edition</span>
         </div>
         <div class="setup-form">
-          <label>Prize for the Winner</label>
-          <input type="text" id="pir-prize" placeholder="e.g. $25 gift card">
-          <button class="btn btn-start" onclick="pirStart()">🎬 Start Price is Right</button>
+          <label>🎁 Prize for the Winner</label>
+          <input type="text" id="pir-prize" placeholder="e.g. $25 Amazon gift card" style="margin-bottom:16px;">
+
+          <div style="font-weight:700;color:var(--brown);font-size:0.95rem;margin-bottom:12px;">Configure All 5 Rounds</div>
+          ${[1,2,3,4,5].map(i => `
+            <div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--cream-dark);">
+              <div style="font-weight:700;color:var(--gold);font-size:0.8rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Round ${i}</div>
+              <label>Product Name</label>
+              <input type="text" id="pirProduct${i}" placeholder="e.g. Pampers Newborn 88ct">
+              <label>Correct Price ($)</label>
+              <input type="number" id="pirPrice${i}" placeholder="e.g. 24.99" step="0.01">
+              <label>Image URL <span style="font-weight:400;opacity:0.6;">(optional)</span></label>
+              <input type="url" id="pirImage${i}" placeholder="https://...product-image.jpg" style="margin-bottom:0;">
+            </div>
+          `).join('')}
+
+          <button class="btn btn-start" style="width:100%;margin-top:8px;" onclick="pirStart()">🎬 Start Price is Right (5 Rounds)</button>
         </div>
       </div>`;
   }
@@ -409,9 +423,10 @@ function renderPIR(pir) {
   if (pir.status === 'round-active' && round) {
     content += `
       <div style="background: var(--cream-dark); border-radius: 12px; padding: 16px; margin: 12px 0;">
-        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} of 3</div>
+        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} of ${pir.totalRounds}</div>
         <div style="font-size: 1.1rem; margin: 4px 0;">📦 ${escHtml(round.productName)}</div>
         <div style="color: var(--brown-light);">Correct price: $${round.correctPrice.toFixed(2)}</div>
+        ${round.imageUrl ? `<div style="margin-top:6px;"><img src="${escHtml(round.imageUrl)}" style="max-height:60px;border-radius:6px;object-fit:contain;"></div>` : ''}
         <div style="margin-top: 8px; font-weight: 600;">📝 ${round.entries.length} guess${round.entries.length !== 1 ? 'es' : ''} submitted</div>
       </div>
       <div class="actions">
@@ -421,9 +436,11 @@ function renderPIR(pir) {
 
   // Round Reveal
   if (pir.status === 'round-reveal' && round) {
+    const nextRound = pir.currentRound + 1;
+    const nextCfg = pir.roundConfig && pir.roundConfig[pir.currentRound];
     content += `
       <div style="background: var(--cream-dark); border-radius: 12px; padding: 16px; margin: 12px 0;">
-        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} Results</div>
+        <div style="font-weight: 700; color: var(--brown);">Round ${pir.currentRound} of ${pir.totalRounds} Results</div>
         <div>📦 ${escHtml(round.productName)} — $${round.correctPrice.toFixed(2)}</div>
         ${round.results.map((r, i) => {
           const advanced = round.advancingNames.includes(r.name.toLowerCase());
@@ -433,15 +450,15 @@ function renderPIR(pir) {
         }).join('')}
       </div>`;
 
-    // Set up next round
-    if (pir.currentRound < 3) {
+    // Next round — auto-configured, just show Start button
+    if (pir.currentRound < pir.totalRounds && nextCfg) {
       content += `
-        <div class="setup-form">
-          <label>Round ${pir.currentRound + 1} Product Name</label>
-          <input type="text" id="pir-product" placeholder="e.g. Baby Monitor">
-          <label>Correct Price ($)</label>
-          <input type="number" id="pir-price" placeholder="e.g. 49.99" step="0.01">
-          <button class="btn btn-start" onclick="pirSetRound()">▶ Start Round ${pir.currentRound + 1}</button>
+        <div style="background: var(--pink-light); border-radius: 12px; padding: 14px 16px; margin: 10px 0; border: 2px solid var(--pink);">
+          <div style="font-weight:700;color:var(--brown);margin-bottom:4px;">Next: Round ${nextRound}</div>
+          <div style="color:var(--brown-light);font-size:0.9rem;">📦 ${escHtml(nextCfg.productName)} — $${parseFloat(nextCfg.correctPrice).toFixed(2)}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-start" onclick="pirSetRound()">▶ Start Round ${nextRound}</button>
         </div>`;
     }
   }
@@ -621,19 +638,28 @@ async function clearEntries(gameId) {
 // ── Price is Right Host Controls ──────────────────────────────────────
 async function pirStart() {
   const prize = document.getElementById('pir-prize')?.value.trim() || '';
+
+  // Collect all 5 round configs
+  const rounds = [];
+  for (let i = 1; i <= 5; i++) {
+    const productName = document.getElementById(`pirProduct${i}`)?.value.trim();
+    const correctPrice = document.getElementById(`pirPrice${i}`)?.value.trim();
+    const imageUrl = document.getElementById(`pirImage${i}`)?.value.trim() || '';
+    if (!productName) return toast(`Round ${i}: Product name is required`, 'error');
+    if (!correctPrice || isNaN(parseFloat(correctPrice))) return toast(`Round ${i}: Enter a valid price`, 'error');
+    rounds.push({ productName, correctPrice: parseFloat(correctPrice), imageUrl });
+  }
+
   try {
-    await api('/api/host/pir/start', 'POST', { prize });
+    await api('/api/host/pir/start', 'POST', { prize, rounds });
     toast('Price is Right started! Players can join now.', 'success');
   } catch (e) { toast(e.message, 'error'); }
 }
 
 async function pirSetRound() {
-  const productName = document.getElementById('pir-product')?.value.trim();
-  const correctPrice = document.getElementById('pir-price')?.value.trim();
-  if (!productName) return toast('Enter a product name', 'error');
-  if (!correctPrice) return toast('Enter the correct price', 'error');
+  // Server reads from pre-configured roundConfig — no body needed
   try {
-    const data = await api('/api/host/pir/set-round', 'POST', { productName, correctPrice: parseFloat(correctPrice) });
+    const data = await api('/api/host/pir/set-round', 'POST', {});
     toast(`Round ${data.round} started!`, 'success');
   } catch (e) { toast(e.message, 'error'); }
 }
