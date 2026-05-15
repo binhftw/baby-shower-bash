@@ -561,29 +561,27 @@
 
   /* Back to hub button */
   .back-to-hub {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: var(--cream);
-    color: var(--brown);
-    font-size: 0.9rem;
+    gap: 7px;
+    background: var(--brown);
+    color: var(--cream);
+    font-size: 0.85rem;
     font-weight: 700;
     text-decoration: none;
-    padding: 11px 20px;
+    padding: 9px 16px 9px 12px;
     margin-bottom: 12px;
-    border-radius: 14px;
-    border: 2px solid var(--brown-light);
-    box-shadow: 0 2px 8px rgba(62,31,13,0.1);
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(62,31,13,0.25);
     transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
     letter-spacing: 0.01em;
   }
   .back-to-hub:hover {
-    background: var(--cream-dark);
+    background: var(--brown-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(62,31,13,0.15);
+    box-shadow: 0 4px 14px rgba(62,31,13,0.35);
   }
-  .back-to-hub:active { transform: scale(0.97); box-shadow: none; }
+  .back-to-hub:active { transform: scale(0.96); box-shadow: none; }
 
   /* PIR phone countdown bar */
   .pir-phone-timer {
