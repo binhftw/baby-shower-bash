@@ -576,6 +576,56 @@
   .back-to-hub:hover { opacity: 1; color: var(--brown); }
   .back-to-hub:active { opacity: 0.6; }
 
+  /* PIR phone countdown bar */
+  .pir-phone-timer {
+    display: none;
+    margin-bottom: 14px;
+  }
+  .pir-phone-timer.visible { display: block; }
+  .pir-timer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brown-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pir-timer-secs {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gold);
+    transition: color 0.3s;
+  }
+  .pir-timer-secs.urgent { color: #dc2626; }
+  .pir-timer-track-bg {
+    height: 6px;
+    background: var(--cream-dark);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .pir-timer-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 999px;
+    transition: width 1s linear, background 0.3s;
+  }
+  .pir-timer-fill.urgent { background: #dc2626; }
+
+  /* PIR guess counter on submitted screen */
+  .pir-guess-tally {
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: var(--cream-dark);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: var(--brown-light);
+    text-align: center;
+  }
+  .pir-guess-tally strong { color: var(--brown); }
+
   /* Connection indicator */
   .connection {
     position: fixed;
@@ -717,6 +767,16 @@
   <div class="state" id="pirActiveState">
     <div class="form-card">
       <div class="error-msg" id="pirError"></div>
+      <!-- Countdown timer bar (only shown when timer is running) -->
+      <div class="pir-phone-timer" id="pirPhoneTimer">
+        <div class="pir-timer-header">
+          <span>⏱ Time remaining</span>
+          <span class="pir-timer-secs" id="pirPhoneTimerSecs">--</span>
+        </div>
+        <div class="pir-timer-track-bg">
+          <div class="pir-timer-fill" id="pirPhoneTimerFill" style="width:100%;"></div>
+        </div>
+      </div>
       <div style="text-align: center; margin-bottom: 12px;">
         <div id="pirRoundLabel" style="background: var(--gold); color: white; display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">ROUND 1 of 5</div>
       </div>
@@ -739,6 +799,17 @@
       <div class="latte-art"></div>
       <div class="success-text">Guess locked in!</div>
       <div class="success-answer" id="pirMyGuess"></div>
+      <!-- Countdown bar on submitted screen too -->
+      <div class="pir-phone-timer" id="pirSubmittedTimer" style="margin-top:16px;">
+        <div class="pir-timer-header">
+          <span>⏱ Time remaining</span>
+          <span class="pir-timer-secs" id="pirSubmittedTimerSecs">--</span>
+        </div>
+        <div class="pir-timer-track-bg">
+          <div class="pir-timer-fill" id="pirSubmittedTimerFill" style="width:100%;"></div>
+        </div>
+      </div>
+      <div class="pir-guess-tally" id="pirGuessTally" style="display:none;"></div>
       <button class="btn-change" onclick="changePIRGuess()">Change My Guess</button>
     </div>
   </div>
@@ -974,6 +1045,41 @@ function escHtml(str) {
 let pirSubmitted = false;
 let pirMyGuess = '';
 let pirJoined = false;
+let pirPhoneTimerInterval = null;
+
+function startPhoneTimer(endMs, totalMs) {
+  stopPhoneTimer();
+  const bars = [
+    { fill: document.getElementById('pirPhoneTimerFill'), secs: document.getElementById('pirPhoneTimerSecs') },
+    { fill: document.getElementById('pirSubmittedTimerFill'), secs: document.getElementById('pirSubmittedTimerSecs') }
+  ];
+  const wraps = [
+    document.getElementById('pirPhoneTimer'),
+    document.getElementById('pirSubmittedTimer')
+  ];
+  wraps.forEach(w => { if (w) w.classList.add('visible'); });
+
+  function tick() {
+    const remaining = Math.max(0, endMs - Date.now());
+    const pct = totalMs > 0 ? (remaining / totalMs) * 100 : 100;
+    const secs = Math.ceil(remaining / 1000);
+    const urgent = remaining <= 10000;
+    bars.forEach(({ fill, secs: secsEl }) => {
+      if (fill) { fill.style.width = pct + '%'; fill.classList.toggle('urgent', urgent); }
+      if (secsEl) { secsEl.textContent = secs + 's'; secsEl.classList.toggle('urgent', urgent); }
+    });
+    if (remaining <= 0) stopPhoneTimer();
+  }
+  tick();
+  pirPhoneTimerInterval = setInterval(tick, 500);
+}
+
+function stopPhoneTimer() {
+  clearInterval(pirPhoneTimerInterval);
+  pirPhoneTimerInterval = null;
+  [document.getElementById('pirPhoneTimer'), document.getElementById('pirSubmittedTimer')]
+    .forEach(w => { if (w) w.classList.remove('visible'); });
+}
 
 function handlePIRState(pir) {
   // Update header for PIR
@@ -1044,11 +1150,34 @@ function handlePIRState(pir) {
       return;
     }
 
+    const round = pir.rounds[pir.currentRound - 1];
+    const guessCount = round.entries.length;
+    const eligibleCount = pir.currentRound === 1
+      ? pir.players.length
+      : pir.advancingPlayers.length;
+
+    // Start or update phone countdown timer
+    if (pir.roundTimerEnd) {
+      startPhoneTimer(pir.roundTimerEnd, (pir.roundTimerSeconds || 90) * 1000);
+    } else {
+      stopPhoneTimer();
+    }
+
     if (pirSubmitted) {
       show('pirSubmittedState');
+      // Update guess tally on submitted screen
+      const tallyEl = document.getElementById('pirGuessTally');
+      if (guessCount > 0) {
+        tallyEl.style.display = 'block';
+        const outOf = eligibleCount > 0 ? ' of ~' + eligibleCount : '';
+        tallyEl.innerHTML = '<strong>' + guessCount + outOf + '</strong> ' +
+          (guessCount === 1 ? 'person has' : 'people have') + ' locked in their guess' +
+          (eligibleCount > 0 && guessCount >= eligibleCount ? ' ✅' : ' — keep an eye on the TV!');
+      } else {
+        tallyEl.style.display = 'none';
+      }
     } else {
       show('pirActiveState');
-      const round = pir.rounds[pir.currentRound - 1];
       document.getElementById('pirRoundLabel').textContent =
         'ROUND ' + pir.currentRound + ' of ' + (pir.totalRounds || 5);
       document.getElementById('pirProductLabel').textContent = round.productName;
@@ -1067,6 +1196,7 @@ function handlePIRState(pir) {
   }
 
   if (pir.status === 'round-reveal') {
+    stopPhoneTimer();
     pirSubmitted = false; // Reset for next round
     const round = pir.rounds[pir.currentRound - 1];
     const justEliminated = round.eliminatedNames.includes(nameLower);
