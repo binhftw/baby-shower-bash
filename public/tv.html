@@ -1453,7 +1453,7 @@ function renderGames(games) {
               ${game.winner && game.winner.id === e.id ? '<span class="winner-crown">\ud83d\udc51</span>' : ''}
               ${escHtml(e.name)}
             </span>
-            <span class="entry-answer">${escHtml(String(e.answer))}</span>
+            <span class="entry-answer">${game.status === 'reveal' ? escHtml(String(e.answer)) : '\u2022\u2022\u2022'}</span>
           </div>
         `).join('')}
       </div>
