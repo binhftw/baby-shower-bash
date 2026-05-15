@@ -889,6 +889,7 @@ async function submitAnswer() {
     if (!res.ok) throw new Error(data.error);
 
     myName = name;
+    localStorage.setItem('cafeBebeName', name);
     myAnswer = answer;
     submitted = true;
     document.getElementById('successAnswer').textContent = answer;
@@ -989,6 +990,11 @@ function handlePIRState(pir) {
   hideAll();
 
   if (!pir || !pir.active || pir.status === 'idle' || pir.status === 'lobby') {
+    // Auto-restore joined state if their name is already in the player list (e.g. navigated away and back)
+    if (!pirJoined && myName && pir && pir.status === 'lobby') {
+      const alreadyIn = (pir.players || []).some(p => p.toLowerCase() === myName.toLowerCase());
+      if (alreadyIn) pirJoined = true;
+    }
     if (pirJoined && myName && pir && pir.status === 'lobby') {
       // Already joined — show the waiting lobby with live player list
       show('pirJoinedState');
@@ -1124,6 +1130,7 @@ async function joinPIR() {
     if (!res.ok) throw new Error(data.error);
 
     myName = name;
+    localStorage.setItem('cafeBebeName', name);
     pirJoined = true;
 
     // Immediately show joined state
@@ -1207,6 +1214,18 @@ function showPIRError(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+// Restore saved name from previous game session
+(function restoreName() {
+  const saved = localStorage.getItem('cafeBebeName');
+  if (!saved) return;
+  myName = saved;
+  // Pre-fill both name inputs if present
+  const nameInput = document.getElementById('inputName');
+  const pirNameInput = document.getElementById('pirName');
+  if (nameInput) nameInput.value = saved;
+  if (pirNameInput) pirNameInput.value = saved;
+})();
 
 connect();
 </script>
