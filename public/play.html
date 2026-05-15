@@ -384,6 +384,67 @@
     75% { transform: translateX(6px); }
   }
 
+  /* PIR Rules Card */
+  .pir-rules {
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 14px;
+    border: 2px solid var(--cream-dark);
+    box-shadow: 0 4px 16px rgba(62,31,13,0.06);
+  }
+  .pir-rules-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--brown);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pir-rules-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pir-rules-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.88rem;
+    color: var(--brown-light);
+    line-height: 1.45;
+  }
+  .pir-rules-list .rule-num {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: var(--gold);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .pir-rules-list strong {
+    color: var(--brown);
+  }
+  .pir-rules-divider {
+    border: none;
+    border-top: 1px solid var(--cream-dark);
+    margin: 14px 0;
+  }
+  .pir-rules-tip {
+    font-size: 0.8rem;
+    color: var(--brown-light);
+    text-align: center;
+    opacity: 0.8;
+  }
+
   /* Connection indicator */
   .connection {
     position: fixed;
@@ -476,6 +537,30 @@
         <input type="text" id="pirName" placeholder="Enter your name" autocomplete="name">
       </div>
       <p style="color: var(--brown-light); font-size: 0.9rem;" id="pirLobbyMsg">Enter your name to get ready! The host will start Round 1 soon.</p>
+    </div>
+
+    <div class="pir-rules">
+      <div class="pir-rules-title">📋 How to Play</div>
+      <ul class="pir-rules-list">
+        <li>
+          <span class="rule-num">1</span>
+          <span>Each round, a <strong>baby product</strong> is shown on the big TV screen. Guess its price right here on your phone.</span>
+        </li>
+        <li>
+          <span class="rule-num">2</span>
+          <span><strong>Closest guess wins</strong> the round — if there's a tie, whoever guessed <em>under</em> beats whoever guessed over.</span>
+        </li>
+        <li>
+          <span class="rule-num">3</span>
+          <span>After each round, the <strong>bottom half</strong> of players is eliminated. Top half advances!</span>
+        </li>
+        <li>
+          <span class="rule-num">4</span>
+          <span>There are <strong>5 rounds</strong> total. Survive all of them and you're the last one standing — you win!</span>
+        </li>
+      </ul>
+      <hr class="pir-rules-divider">
+      <p class="pir-rules-tip">👀 Keep an eye on the TV — that's where the product and results are shown!</p>
     </div>
   </div>
 
