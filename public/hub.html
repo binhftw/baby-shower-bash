@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cafe Bébé - Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Sacramento&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brown: #5c3317;
+    --brown-light: #8b5e3c;
+    --brown-dark: #3e1f0d;
+    --pink: #f2a6b8;
+    --pink-light: #fce4ec;
+    --pink-stripe: #f8c8d8;
+    --cream: #fdf8f0;
+    --cream-dark: #f5ead6;
+    --gold: #c49b63;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--pink-stripe) 0px, var(--pink-stripe) 28px,
+      var(--cream) 28px, var(--cream) 56px
+    );
+    color: var(--brown-dark);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 20px 16px 40px;
+  }
+
+  h1, h2 { font-family: 'Playfair Display', serif; }
+
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+    background: var(--cream);
+    border-radius: 20px;
+    padding: 20px 24px 16px;
+    border: 3px solid var(--brown);
+    box-shadow: 0 4px 16px rgba(62,31,13,0.1);
+    position: relative;
+    max-width: 420px;
+    margin: 0 auto 24px;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -14px; left: -3px; right: -3px;
+    height: 14px;
+    background: repeating-linear-gradient(90deg, var(--brown) 0px, var(--brown) 24px, var(--cream) 24px, var(--cream) 48px);
+    border-radius: 18px 18px 0 0;
+    border: 3px solid var(--brown);
+    border-bottom: none;
+  }
+  .cafe-label { font-family: 'Sacramento', cursive; font-size: 1.5rem; color: var(--pink); margin-bottom: 2px; }
+  .header h1 { font-size: 1.5rem; color: var(--brown); }
+  .header p { color: var(--brown-light); font-size: 0.9rem; margin-top: 4px; }
+
+  .games-list {
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .game-card {
+    background: var(--cream);
+    border-radius: 20px;
+    border: 3px solid var(--cream-dark);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card.active {
+    border-color: var(--pink);
+    box-shadow: 0 4px 20px rgba(242,166,184,0.25);
+    cursor: pointer;
+  }
+  .game-card.active:active { transform: scale(0.97); }
+  .game-card.active:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(242,166,184,0.35); }
+  .game-card.pir-active {
+    border-color: var(--gold);
+    box-shadow: 0 4px 20px rgba(196,155,99,0.25);
+    cursor: pointer;
+  }
+  .game-card.pir-active:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(196,155,99,0.35); }
+  .game-card.waiting { opacity: 0.55; cursor: default; }
+  .game-card.reveal { border-color: var(--gold); opacity: 0.7; cursor: default; }
+
+  /* Sheen on active cards */
+  .game-card.active::after, .game-card.pir-active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%);
+    animation: cardSheen 3s infinite;
+  }
+  @keyframes cardSheen {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .game-emoji-wrap {
+    width: 56px; height: 56px;
+    background: var(--pink-light);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+    border: 2px solid var(--pink);
+  }
+  .game-card.pir-active .game-emoji-wrap { background: #fef3c7; border-color: var(--gold); }
+  .game-card.waiting .game-emoji-wrap { background: var(--cream-dark); border-color: var(--cream-dark); }
+
+  .game-info { flex: 1; min-width: 0; }
+  .game-name { font-size: 1.1rem; font-weight: 700; color: var(--brown); }
+  .game-desc { font-size: 0.82rem; color: var(--brown-light); margin-top: 2px; }
+
+  .game-status {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .status-open { background: var(--pink); color: white; animation: statusPulse 2s infinite; }
+  .status-pir  { background: var(--gold); color: white; animation: statusPulse 2s infinite; }
+  .status-wait { background: var(--cream-dark); color: var(--brown-light); }
+  .status-done { background: var(--gold); color: white; }
+
+  @keyframes statusPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+
+  .tap-hint {
+    text-align: center;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: var(--brown-light);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    display: none;
+  }
+  .game-card.active + .tap-hint,
+  .game-card.pir-active + .tap-hint { display: block; }
+
+  .no-games {
+    text-align: center;
+    padding: 40px 24px;
+    background: var(--cream);
+    border-radius: 20px;
+    color: var(--brown-light);
+  }
+  .no-games .icon { font-size: 3rem; margin-bottom: 12px; }
+
+  .connection {
+    position: fixed; top: 8px; right: 8px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #b91c1c;
+    transition: background 0.3s;
+    z-index: 50;
+  }
+  .connection.connected { background: #16a34a; }
+</style>
+</head>
+<body>
+
+<div class="connection" id="connDot"></div>
+
+<div class="header">
+  <div class="cafe-label">Cafe Bébé</div>
+  <h1>Game Hub</h1>
+  <p>Tap any open game to play!</p>
+</div>
+
+<div class="games-list" id="gamesList">
+  <div class="no-games">
+    <div class="icon">☕</div>
+    <div>Connecting...</div>
+  </div>
+</div>
+
+<script>
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+let ws;
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => document.getElementById('connDot').classList.add('connected');
+  ws.onclose = () => {
+    document.getElementById('connDot').classList.remove('connected');
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') render(msg.data);
+  };
+}
+
+function render(state) {
+  const list = document.getElementById('gamesList');
+  const cards = [];
+
+  // Regular games
+  for (const game of Object.values(state.games)) {
+    const isActive = game.status === 'active';
+    const isReveal = game.status === 'reveal';
+
+    let cardClass = 'game-card';
+    let statusLabel = '';
+    let statusClass = '';
+
+    if (isActive) {
+      cardClass += ' active';
+      statusLabel = '🟢 Open!';
+      statusClass = 'status-open';
+    } else if (isReveal) {
+      cardClass += ' reveal';
+      statusLabel = '🏆 Revealed';
+      statusClass = 'status-done';
+    } else {
+      cardClass += ' waiting';
+      statusLabel = 'Not started';
+      statusClass = 'status-wait';
+    }
+
+    const inner = `
+      <div class="game-emoji-wrap">${game.emoji}</div>
+      <div class="game-info">
+        <div class="game-name">${escHtml(game.title)}</div>
+        <div class="game-desc">${escHtml(game.description)}</div>
+      </div>
+      <span class="game-status ${statusClass}">${statusLabel}</span>
+    `;
+
+    if (isActive) {
+      cards.push(`<a class="${cardClass}" href="/play/${game.id}">${inner}</a>`);
+    } else {
+      cards.push(`<div class="${cardClass}">${inner}</div>`);
+    }
+  }
+
+  // Price is Right
+  const pir = state.priceIsRight;
+  if (pir) {
+    const pirOpen = pir.active && (pir.status === 'lobby' || pir.status === 'round-active');
+    const pirDone = pir.status === 'finished';
+
+    let cardClass = 'game-card';
+    let statusLabel = '';
+    let statusClass = '';
+
+    if (pirOpen) {
+      cardClass += ' pir-active';
+      statusLabel = pir.status === 'lobby' ? '🟡 Joining' : '🟢 Round ' + pir.currentRound;
+      statusClass = 'status-pir';
+    } else if (pirDone) {
+      cardClass += ' reveal';
+      statusLabel = '🏆 Finished';
+      statusClass = 'status-done';
+    } else if (pir.active) {
+      cardClass += ' waiting';
+      statusLabel = 'Between rounds';
+      statusClass = 'status-wait';
+    } else {
+      cardClass += ' waiting';
+      statusLabel = 'Not started';
+      statusClass = 'status-wait';
+    }
+
+    const inner = `
+      <div class="game-emoji-wrap" style="${pirOpen ? 'background:#fef3c7;border-color:var(--gold)' : ''}">💰</div>
+      <div class="game-info">
+        <div class="game-name">Price is Right</div>
+        <div class="game-desc">Baby Edition — guess the price of baby products!</div>
+      </div>
+      <span class="game-status ${statusClass}">${statusLabel}</span>
+    `;
+
+    if (pirOpen) {
+      cards.push(`<a class="${cardClass}" href="/play/priceisright">${inner}</a>`);
+    } else {
+      cards.push(`<div class="${cardClass}">${inner}</div>`);
+    }
+  }
+
+  if (cards.length === 0) {
+    list.innerHTML = `<div class="no-games"><div class="icon">☕</div><div>No games yet — the host will start one soon!</div></div>`;
+  } else {
+    list.innerHTML = cards.join('');
+  }
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+connect();
+</script>
+</body>
+</html>

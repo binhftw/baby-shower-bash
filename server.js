@@ -72,13 +72,16 @@ function createInitialState() {
       advancingPlayers: [],  // lowercase names allowed to play current round
       eliminatedPlayers: [], // cumulative lowercase eliminated names
       winner: null,          // { name, guess, diff }
-      prize: ''
+      prize: '',
+      roundTimerSeconds: 0,  // 0 = no timer; >0 = auto-end after N seconds
+      roundTimerEnd: null    // epoch ms when the current round auto-ends
     }
   };
 }
 
 let state = createInitialState();
 let entryCounter = 0;
+let pirTimerTimeout = null; // server-side auto-end timer for PIR rounds
 
 // ── Express App ───────────────────────────────────────────────────────
 const app = express();
@@ -122,10 +125,12 @@ app.get('/api/config', (req, res) => {
 // ── API: QR Codes ─────────────────────────────────────────────────────
 app.get('/api/qr/:gameId', async (req, res) => {
   const { gameId } = req.params;
-  if (!state.games[gameId] && gameId !== 'priceisright') return res.status(404).json({ error: 'Game not found' });
+  if (!state.games[gameId] && gameId !== 'priceisright' && gameId !== 'hub') {
+    return res.status(404).json({ error: 'Game not found' });
+  }
 
   const base = getBaseURL(req);
-  const url = `${base}/play/${gameId}`;
+  const url = gameId === 'hub' ? `${base}/play` : `${base}/play/${gameId}`;
   try {
     const qr = await QRCode.toDataURL(url, {
       width: 256,
@@ -276,10 +281,11 @@ app.delete('/api/host/entries/:gameId', (req, res) => {
 // Start the game
 app.post('/api/host/pir/start', (req, res) => {
   const pir = state.priceIsRight;
-  const { prize, rounds } = req.body;
+  const { prize, rounds, roundTimerSeconds } = req.body;
   if (!rounds || !Array.isArray(rounds) || rounds.length === 0) {
     return res.status(400).json({ error: 'Round configurations are required' });
   }
+  clearTimeout(pirTimerTimeout);
   pir.active = true;
   pir.status = 'lobby';
   pir.currentRound = 0;
@@ -291,6 +297,8 @@ app.post('/api/host/pir/start', (req, res) => {
   pir.eliminatedPlayers = [];
   pir.winner = null;
   pir.prize = prize || '';
+  pir.roundTimerSeconds = parseInt(roundTimerSeconds) || 0;
+  pir.roundTimerEnd = null;
   broadcast();
   res.json({ success: true });
 });
@@ -318,6 +326,21 @@ app.post('/api/host/pir/set-round', (req, res) => {
     eliminatedNames: []
   });
   pir.status = 'round-active';
+
+  // Arm the server-side auto-end timer if configured
+  clearTimeout(pirTimerTimeout);
+  if (pir.roundTimerSeconds > 0) {
+    pir.roundTimerEnd = Date.now() + pir.roundTimerSeconds * 1000;
+    pirTimerTimeout = setTimeout(() => {
+      if (state.priceIsRight.status === 'round-active') {
+        executePIREndRound(state.priceIsRight);
+        broadcast();
+      }
+    }, pir.roundTimerSeconds * 1000);
+  } else {
+    pir.roundTimerEnd = null;
+  }
+
   broadcast();
   res.json({ success: true, round: pir.currentRound });
 });
@@ -370,49 +393,37 @@ app.post('/api/pir/entry', (req, res) => {
   res.json({ success: true });
 });
 
-// End current round — calculate advancement
-app.post('/api/host/pir/end-round', (req, res) => {
-  const pir = state.priceIsRight;
-  if (!pir.active || pir.status !== 'round-active') {
-    return res.status(400).json({ error: 'No active round to end' });
-  }
+// Shared end-round logic (called by both the API endpoint and the auto-timer)
+function executePIREndRound(pir) {
+  clearTimeout(pirTimerTimeout);
+  pir.roundTimerEnd = null;
 
   const round = pir.rounds[pir.currentRound - 1];
-  if (round.entries.length === 0) {
-    return res.status(400).json({ error: 'No guesses submitted yet' });
-  }
 
   // Sort entries by closeness to correct price
-  // Tiebreak: under beats over, then earlier timestamp
   const correct = round.correctPrice;
   round.results = [...round.entries].sort((a, b) => {
     const diffA = Math.abs(a.guess - correct);
     const diffB = Math.abs(b.guess - correct);
     if (diffA !== diffB) return diffA - diffB;
-    // Tiebreak: prefer under (not over)
     const overA = a.guess > correct ? 1 : 0;
     const overB = b.guess > correct ? 1 : 0;
     if (overA !== overB) return overA - overB;
-    // Tiebreak: earlier timestamp
     return a.timestamp - b.timestamp;
   });
-
-  // Add diff to each result
   round.results.forEach(r => { r.diff = Math.abs(r.guess - correct); });
 
-  // Calculate how many advance — top 50%, minimum 2, until the final round
   const totalRounds = pir.totalRounds || 5;
   const isFinalRound = pir.currentRound >= totalRounds;
 
   let advanceCount;
   if (isFinalRound) {
-    advanceCount = 0; // Last round — no advancement, pick winner
+    advanceCount = 0;
   } else {
     advanceCount = Math.max(2, Math.round(round.entries.length * 0.5));
     advanceCount = Math.min(advanceCount, round.entries.length);
   }
 
-  // Determine who advances
   const advancing = isFinalRound ? [] : round.results.slice(0, advanceCount);
   const eliminated = isFinalRound ? round.results.slice(1) : round.results.slice(advanceCount);
 
@@ -422,7 +433,6 @@ app.post('/api/host/pir/end-round', (req, res) => {
   pir.advancingPlayers = [...round.advancingNames];
   pir.eliminatedPlayers = [...new Set([...pir.eliminatedPlayers, ...round.eliminatedNames])];
 
-  // If final round, set winner
   if (isFinalRound) {
     pir.winner = round.results[0] ? {
       name: round.results[0].name,
@@ -434,12 +444,28 @@ app.post('/api/host/pir/end-round', (req, res) => {
     pir.status = 'round-reveal';
   }
 
+  return round;
+}
+
+// End current round — calculate advancement
+app.post('/api/host/pir/end-round', (req, res) => {
+  const pir = state.priceIsRight;
+  if (!pir.active || pir.status !== 'round-active') {
+    return res.status(400).json({ error: 'No active round to end' });
+  }
+  const round = pir.rounds[pir.currentRound - 1];
+  if (round.entries.length === 0) {
+    return res.status(400).json({ error: 'No guesses submitted yet' });
+  }
+
+  executePIREndRound(pir);
   broadcast();
   res.json({ success: true, results: round.results, advancingNames: round.advancingNames });
 });
 
 // End the Price is Right game entirely — return to normal TV
 app.post('/api/host/pir/end', (req, res) => {
+  clearTimeout(pirTimerTimeout);
   const pir = state.priceIsRight;
   pir.active = false;
   pir.status = 'idle';
@@ -452,6 +478,8 @@ app.post('/api/host/pir/end', (req, res) => {
   pir.eliminatedPlayers = [];
   pir.winner = null;
   pir.prize = '';
+  pir.roundTimerSeconds = 0;
+  pir.roundTimerEnd = null;
   broadcast();
   res.json({ success: true });
 });
@@ -459,6 +487,7 @@ app.post('/api/host/pir/end', (req, res) => {
 // ── Page Routes ───────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tv.html')));
 app.get('/host', (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
+app.get('/play', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hub.html')));
 app.get('/play/:gameId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'play.html')));
 
 // ── Winner Calculation ────────────────────────────────────────────────

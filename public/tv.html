@@ -699,6 +699,70 @@
     animation: nameSlide 0.5s ease-out;
   }
 
+  /* ── Entry Pop Toast ────────────────────────────────────── */
+  .entry-pop-container {
+    position: fixed;
+    bottom: 28px;
+    left: 32px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .entry-pop {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 2px solid var(--pink);
+    border-radius: 999px;
+    padding: 10px 18px 10px 12px;
+    box-shadow: 0 4px 20px rgba(62,31,13,0.15);
+    animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brown);
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-pop.fading { animation: popOut 0.4s ease-in forwards; }
+  .entry-pop-emoji { font-size: 1.3rem; flex-shrink: 0; }
+  @keyframes popIn {
+    from { opacity: 0; transform: translateX(-30px) scale(0.85); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  @keyframes popOut {
+    from { opacity: 1; transform: translateX(0) scale(1); }
+    to   { opacity: 0; transform: translateX(-20px) scale(0.9); }
+  }
+
+  /* ── PIR Round Countdown ─────────────────────────────────── */
+  .pir-timer-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 12px 0 4px;
+  }
+  .pir-timer-ring {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+  .pir-timer-ring svg { transform: rotate(-90deg); }
+  .pir-timer-track { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 5; }
+  .pir-timer-arc   { fill: none; stroke: var(--gold); stroke-width: 5; stroke-linecap: round;
+                     transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .pir-timer-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 900; color: white;
+  }
+
   /* ── Price is Right Curtain Reveal ─────────────────────── */
   .pir-curtain-wrap {
     position: relative;
@@ -945,6 +1009,9 @@
 <!-- Floating coffee beans background -->
 <div class="floating-beans" id="floatingBeans"></div>
 
+<!-- Entry pop toasts (bottom-left, above the fold) -->
+<div class="entry-pop-container" id="entryPopContainer"></div>
+
 <div class="header">
   <div class="header-inner">
     <div class="steam-container">
@@ -1080,9 +1147,21 @@
       </div>
     </div>
 
-    <div style="font-size: 1.2rem; color: rgba(255,255,255,0.5); margin-bottom: 16px;">How much does it cost?</div>
+    <div style="font-size: 1.2rem; color: rgba(255,255,255,0.5); margin-bottom: 8px;">How much does it cost?</div>
     <div class="pir-guess-counter" id="pirGuessCounter">0 guesses</div>
     <div class="pir-eligible" id="pirEligible"></div>
+
+    <!-- Round countdown timer (hidden when no timer) -->
+    <div class="pir-timer-wrap" id="pirTimerWrap" style="display:none;">
+      <div class="pir-timer-ring">
+        <svg viewBox="0 0 72 72" width="72" height="72">
+          <circle class="pir-timer-track" cx="36" cy="36" r="30"/>
+          <circle class="pir-timer-arc" id="pirTimerArc" cx="36" cy="36" r="30"
+            stroke-dasharray="188.5" stroke-dashoffset="0"/>
+        </svg>
+        <div class="pir-timer-num" id="pirTimerNum">--</div>
+      </div>
+    </div>
 
     <!-- Persistent QR in corner so late arrivals can still join -->
     <div id="pirRoundQrBox" style="position:absolute;bottom:20px;right:20px;background:white;padding:10px 10px 6px;border-radius:14px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
@@ -1117,6 +1196,54 @@ const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.ho
 let ws;
 let prevState = null;
 let spinnerRunning = false;
+let pirTimerInterval = null;
+const CIRC = 2 * Math.PI * 30; // SVG circle circumference (r=30)
+
+// ── Entry Pop Toasts ───────────────────────────────────────────────
+function showEntryPop(name, emoji) {
+  const container = document.getElementById('entryPopContainer');
+  const el = document.createElement('div');
+  el.className = 'entry-pop';
+  el.innerHTML = `<span class="entry-pop-emoji">${emoji}</span><span>${escHtml(name)} guessed!</span>`;
+  container.appendChild(el);
+  // Fade out after 2.8s, remove after 3.2s
+  setTimeout(() => el.classList.add('fading'), 2800);
+  setTimeout(() => el.remove(), 3200);
+  // Cap at 5 visible toasts
+  while (container.children.length > 5) container.firstChild.remove();
+}
+
+// ── PIR Countdown Ring ─────────────────────────────────────────────
+function startPIRTimer(endMs, totalMs) {
+  clearInterval(pirTimerInterval);
+  const arc = document.getElementById('pirTimerArc');
+  const num = document.getElementById('pirTimerNum');
+  const wrap = document.getElementById('pirTimerWrap');
+  if (!arc || !num || !wrap) return;
+  wrap.style.display = 'flex';
+
+  function tick() {
+    const remaining = Math.max(0, endMs - Date.now());
+    const secs = Math.ceil(remaining / 1000);
+    num.textContent = secs;
+    // Dash offset: full circle = 0 offset (full); empty = CIRC offset
+    const progress = totalMs > 0 ? remaining / totalMs : 0;
+    arc.style.strokeDashoffset = CIRC * (1 - progress);
+    arc.style.stroke = secs <= 10 ? '#ef4444' : 'var(--gold)';
+    if (remaining <= 0) {
+      clearInterval(pirTimerInterval);
+      wrap.style.display = 'none';
+    }
+  }
+  tick();
+  pirTimerInterval = setInterval(tick, 500);
+}
+
+function stopPIRTimer() {
+  clearInterval(pirTimerInterval);
+  const wrap = document.getElementById('pirTimerWrap');
+  if (wrap) wrap.style.display = 'none';
+}
 
 // Floating particles — beans, hearts, sparkles, cookies across the whole page
 (function initParticles() {
@@ -1200,6 +1327,7 @@ function handleState(state) {
     for (const game of games) {
       const prev = prevState.games[game.id];
       if (!prev) continue;
+      // Winner / tie reveal transitions
       if (prev.status !== 'reveal' && game.status === 'reveal') {
         if (game.tiedEntries && game.tiedEntries.length > 1) {
           showTiebreaker(game);
@@ -1210,6 +1338,23 @@ function handleState(state) {
       if (prev.status === 'reveal' && game.status === 'reveal'
           && !prev.winner && game.winner && !spinnerRunning) {
         showWinner(game);
+      }
+      // Entry pop toasts — new submissions
+      if (game.status === 'active' && game.entries.length > prev.entries.length) {
+        const newEntries = game.entries.slice(prev.entries.length);
+        newEntries.forEach(e => showEntryPop(e.name, game.emoji));
+      }
+    }
+
+    // PIR entry pops
+    const pir = state.priceIsRight;
+    const prevPir = prevState.priceIsRight;
+    if (pir && prevPir && pir.status === 'round-active' && pir.currentRound > 0) {
+      const round = pir.rounds[pir.currentRound - 1];
+      const prevRound = prevPir.rounds && prevPir.rounds[pir.currentRound - 1];
+      if (round && prevRound && round.entries.length > prevRound.entries.length) {
+        const newEntries = round.entries.slice(prevRound.entries.length);
+        newEntries.forEach(e => showEntryPop(e.name, '💰'));
       }
     }
   }
@@ -1380,6 +1525,14 @@ function renderPIRScreen(pir) {
       }, 600);
     }
 
+    // Round countdown timer
+    if (pir.roundTimerEnd) {
+      const totalMs = (pir.roundTimerSeconds || 90) * 1000;
+      startPIRTimer(pir.roundTimerEnd, totalMs);
+    } else {
+      stopPIRTimer();
+    }
+
     // Persistent small QR in corner so late arrivals can still join
     fetch('/api/qr/priceisright').then(r => r.json()).then(data => {
       const qrEl = document.getElementById('pirRoundQr');
@@ -1391,6 +1544,7 @@ function renderPIRScreen(pir) {
 
   if (pir.status === 'round-reveal') {
     pirCurtainsOpen = false; // reset so next round gets fresh curtain
+    stopPIRTimer();
     const round = pir.rounds[pir.currentRound - 1];
     document.getElementById('pirRoundReveal').classList.add('active');
     document.getElementById('pirRevealBadge').textContent =
