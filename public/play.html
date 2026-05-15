@@ -559,6 +559,23 @@
     opacity: 0.8;
   }
 
+  /* Back to hub link */
+  .back-to-hub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--brown-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 8px 4px;
+    margin-bottom: 10px;
+    opacity: 0.75;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .back-to-hub:hover { opacity: 1; color: var(--brown); }
+  .back-to-hub:active { opacity: 0.6; }
+
   /* Connection indicator */
   .connection {
     position: fixed;
@@ -579,6 +596,7 @@
 <div class="connection" id="connDot"></div>
 
 <div class="container">
+  <a href="/play" class="back-to-hub">← All Games</a>
   <div class="game-header">
     <div class="cafe-label">Cafe bebe</div>
     <span class="game-emoji" id="gameEmoji"></span>
