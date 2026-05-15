@@ -559,22 +559,31 @@
     opacity: 0.8;
   }
 
-  /* Back to hub link */
+  /* Back to hub button */
   .back-to-hub {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    color: var(--brown-light);
-    font-size: 0.85rem;
-    font-weight: 600;
+    justify-content: center;
+    gap: 8px;
+    background: var(--cream);
+    color: var(--brown);
+    font-size: 0.9rem;
+    font-weight: 700;
     text-decoration: none;
-    padding: 8px 4px;
-    margin-bottom: 10px;
-    opacity: 0.75;
-    transition: opacity 0.15s, color 0.15s;
+    padding: 11px 20px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+    border: 2px solid var(--brown-light);
+    box-shadow: 0 2px 8px rgba(62,31,13,0.1);
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    letter-spacing: 0.01em;
   }
-  .back-to-hub:hover { opacity: 1; color: var(--brown); }
-  .back-to-hub:active { opacity: 0.6; }
+  .back-to-hub:hover {
+    background: var(--cream-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(62,31,13,0.15);
+  }
+  .back-to-hub:active { transform: scale(0.97); box-shadow: none; }
 
   /* PIR phone countdown bar */
   .pir-phone-timer {
