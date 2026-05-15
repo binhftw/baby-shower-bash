@@ -886,6 +886,37 @@
   }
   .pir-waiting { color: var(--pink); font-size: 1.1rem; margin-top: 16px; }
 
+  /* Lobby player grid */
+  .pir-lobby-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 760px;
+    margin: 24px auto 0;
+  }
+  .pir-lobby-bubble {
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: white;
+    animation: lobbyBubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    letter-spacing: 0.02em;
+  }
+  @keyframes lobbyBubblePop {
+    from { opacity: 0; transform: scale(0.4) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .pir-lobby-empty {
+    color: rgba(255,255,255,0.35);
+    font-size: 1rem;
+    margin-top: 20px;
+    font-style: italic;
+  }
+
   /* Round Active */
   .pir-round {
     flex-direction: column;
@@ -1128,7 +1159,10 @@
       </div>
     </div>
     <div class="pir-player-count" id="pirPlayerCount">0 players joined</div>
-    <div class="pir-waiting">Waiting for host to start Round 1...</div>
+    <div id="pirLobbyPlayers" class="pir-lobby-players">
+      <div class="pir-lobby-empty" id="pirLobbyEmpty">Waiting for players to join...</div>
+    </div>
+    <div class="pir-waiting">Host will start Round 1 soon!</div>
   </div>
 
   <!-- Round Active -->
@@ -1314,7 +1348,11 @@ function handleState(state) {
     prevState = JSON.parse(JSON.stringify(state));
     return;
   }
-  // Restore normal UI
+  // Restore normal UI — also clear lobby bubbles so next game starts fresh
+  const lobbyContainer = document.getElementById('pirLobbyPlayers');
+  if (lobbyContainer) {
+    lobbyContainer.innerHTML = '<div class="pir-lobby-empty" id="pirLobbyEmpty">Waiting for players to join...</div>';
+  }
   document.querySelector('.header').style.display = '';
   document.querySelector('.awning').style.display = '';
   document.getElementById('gamesGrid').style.display = '';
@@ -1482,14 +1520,40 @@ function renderPIRScreen(pir) {
 
   if (pir.status === 'lobby') {
     document.getElementById('pirLobby').classList.add('active');
+    const count = pir.players.length;
     document.getElementById('pirPlayerCount').textContent =
-      pir.players.length + ' player' + (pir.players.length !== 1 ? 's' : '') + ' joined';
+      count + ' player' + (count !== 1 ? 's' : '') + ' joined';
     pirCurtainsOpen = false;
-    // Load QR
-    fetch('/api/qr/priceisright').then(r => r.json()).then(data => {
-      document.getElementById('pirQrImg').src = data.qr;
-      document.getElementById('pirQrUrl').textContent = data.url;
-    }).catch(() => {});
+
+    // Render player bubbles — only add newly joined players to preserve pop animations
+    const container = document.getElementById('pirLobbyPlayers');
+    const emptyMsg = document.getElementById('pirLobbyEmpty');
+    const existing = new Set([...container.querySelectorAll('.pir-lobby-bubble')].map(b => b.dataset.name));
+    (pir.players || []).forEach(name => {
+      if (!existing.has(name)) {
+        if (emptyMsg) emptyMsg.remove();
+        const b = document.createElement('div');
+        b.className = 'pir-lobby-bubble';
+        b.dataset.name = name;
+        b.textContent = name;
+        container.appendChild(b);
+      }
+    });
+    if (count === 0 && !container.querySelector('.pir-lobby-empty')) {
+      const msg = document.createElement('div');
+      msg.className = 'pir-lobby-empty';
+      msg.id = 'pirLobbyEmpty';
+      msg.textContent = 'Waiting for players to join...';
+      container.appendChild(msg);
+    }
+
+    // Load QR (only once — skip if already loaded)
+    if (!document.getElementById('pirQrImg').src || document.getElementById('pirQrImg').src === window.location.href) {
+      fetch('/api/qr/priceisright').then(r => r.json()).then(data => {
+        document.getElementById('pirQrImg').src = data.qr;
+        document.getElementById('pirQrUrl').textContent = data.url;
+      }).catch(() => {});
+    }
   }
 
   if (pir.status === 'round-active') {

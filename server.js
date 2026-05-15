@@ -278,6 +278,23 @@ app.delete('/api/host/entries/:gameId', (req, res) => {
 
 // ── Price is Right: API ────────────────────────────────────────────────
 
+// Guest joins the lobby — registers their name before rounds begin
+app.post('/api/pir/join', (req, res) => {
+  const pir = state.priceIsRight;
+  if (!pir.active || pir.status !== 'lobby') {
+    return res.status(400).json({ error: 'Game is not in lobby' });
+  }
+  const name = (req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  // Deduplicate case-insensitively
+  const already = pir.players.some(p => p.toLowerCase() === name.toLowerCase());
+  if (!already) {
+    pir.players.push(name);
+    broadcast();
+  }
+  res.json({ success: true, players: pir.players });
+});
+
 // Start the game
 app.post('/api/host/pir/start', (req, res) => {
   const pir = state.priceIsRight;
