@@ -924,35 +924,36 @@
     justify-content: center;
     min-height: 100vh;
     text-align: center;
-    padding: 40px;
+    padding: 24px 40px;
   }
   .pir-round-badge {
     background: var(--gold);
     color: white;
-    padding: 8px 32px;
+    padding: 10px 40px;
     border-radius: 999px;
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     animation: pulseStatus 2s infinite;
   }
   .pir-product-name {
     font-family: 'Playfair Display', serif;
-    font-size: 3rem;
+    font-size: 5rem;
     font-weight: 900;
     color: white;
     margin-bottom: 16px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    line-height: 1.1;
   }
   .pir-guess-counter {
-    font-size: 1.5rem;
+    font-size: 2.2rem;
     color: var(--pink);
     font-weight: 600;
   }
   .pir-eligible {
-    font-size: 1rem;
+    font-size: 1.3rem;
     color: rgba(255,255,255,0.6);
     margin-top: 12px;
   }
@@ -1170,18 +1171,18 @@
     <div class="pir-round-badge" id="pirRoundBadge">ROUND 1 of 5</div>
 
     <!-- Curtain reveal wrapper -->
-    <div class="pir-curtain-wrap" id="pirCurtainWrap" style="width:100%;max-width:480px;margin:0 auto 20px;">
+    <div class="pir-curtain-wrap" id="pirCurtainWrap" style="width:100%;max-width:760px;margin:0 auto 24px;">
       <div class="pir-curtain-left"></div>
       <div class="pir-curtain-right"></div>
-      <div style="padding:20px 12px;text-align:center;">
-        <div id="pirProductImageWrap" style="display:none;margin-bottom:14px;">
-          <img id="pirProductImage" src="" alt="" style="max-height:240px;max-width:100%;border-radius:14px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      <div style="padding:28px 20px;text-align:center;">
+        <div id="pirProductImageWrap" style="display:none;margin-bottom:20px;">
+          <img id="pirProductImage" src="" alt="" style="max-height:380px;max-width:100%;border-radius:18px;object-fit:contain;box-shadow:0 12px 48px rgba(0,0,0,0.5);">
         </div>
         <div class="pir-product-name" id="pirProductName" style="margin-bottom:0;"></div>
       </div>
     </div>
 
-    <div style="font-size: 1.2rem; color: rgba(255,255,255,0.5); margin-bottom: 8px;">How much does it cost?</div>
+    <div style="font-size: 1.8rem; color: rgba(255,255,255,0.5); margin-bottom: 12px; font-weight: 500;">How much does it cost?</div>
     <div class="pir-guess-counter" id="pirGuessCounter">0 guesses</div>
     <div class="pir-eligible" id="pirEligible"></div>
 
@@ -1198,10 +1199,10 @@
     </div>
 
     <!-- Persistent QR in corner so late arrivals can still join -->
-    <div id="pirRoundQrBox" style="position:absolute;bottom:20px;right:20px;background:white;padding:10px 10px 6px;border-radius:14px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
-      <img id="pirRoundQr" width="80" height="80" style="display:block;border-radius:6px;">
-      <div style="font-size:0.65rem;font-weight:700;color:#5c3317;margin-top:4px;">Scan to join!</div>
-      <div id="pirRoundQrUrl" style="font-size:0.5rem;color:#8b5e3c;opacity:0.7;word-break:break-all;max-width:80px;margin-top:1px;"></div>
+    <div id="pirRoundQrBox" style="position:absolute;bottom:24px;right:24px;background:white;padding:14px 14px 8px;border-radius:18px;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,0.35);">
+      <img id="pirRoundQr" width="110" height="110" style="display:block;border-radius:8px;">
+      <div style="font-size:0.8rem;font-weight:700;color:#5c3317;margin-top:6px;">Scan to join!</div>
+      <div id="pirRoundQrUrl" style="font-size:0.6rem;color:#8b5e3c;opacity:0.7;word-break:break-all;max-width:110px;margin-top:2px;"></div>
     </div>
   </div>
 
